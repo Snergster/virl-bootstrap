@@ -4,26 +4,36 @@ virl-bootstrap
 couple files to get salted and configured
 
 prereq: 
+
 install 14.4.1
+
 default user virl
-going to need at least python installed and get base upgrades done. 
+
 sudo -s
+
 apt-get update
+
 apt-get dist-upgrade -y
-apt-get install python
+
+apt-get install -y python git
+
 reboot
+
 login as virl
-apt-get install git
+
 git clone https://github.com/Snergster/virl-bootstrap.git
+
 cd virl-bootstrap
 
 1. sudo ./install_salt.sh
 
-2. cp ./virl-bootstrap/vsettings.ini /home/virl/settings.ini
+2. cp ./vsettings.ini /home/virl/settings.ini
 
 3. customize /home/virl/settings.ini
 
 3. sudo -s
+
+cd virl-bootstap
 
 4 edit extra.conf for your correct id and salt server
 
@@ -35,7 +45,7 @@ cd virl-bootstrap
 
 8. salt-call state.sls zero
 
-9 vinstall salt
+9 python ./vinstall salt
 
 10. salt-call state.sls host
 
