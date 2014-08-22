@@ -55,7 +55,9 @@ verify /etc/network/interfaces is how you like it
 
 # rest of the steps done as virl
 
-12. vinstall all
+cd virl-bootstrap
+
+12. python vinstall all
 
 13. sudo salt-call state.sls images
 
