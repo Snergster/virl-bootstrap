@@ -19,7 +19,7 @@ cd virl-bootstrap
 
 1. sudo ./install_salt.sh
 
-2. move vsettings to /home/virl/settings.ini
+2. cp ./virl-bootstrap/vsettings.ini /home/virl/settings.ini
 
 3. customize /home/virl/settings.ini
 
