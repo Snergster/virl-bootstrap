@@ -49,9 +49,9 @@ cd virl-bootstap
 
 10. salt-call state.sls host
 
-verify /etc/networking/interfaces is how you like it
+verify /etc/network/interfaces is how you like it
 
-11. reboot
+11. sudo reboot
 
 # rest of the steps done as virl
 
