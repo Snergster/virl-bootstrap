@@ -14,7 +14,7 @@ apt-get install python
 reboot
 login as virl
 apt-get install git
-clone this repo
+git clone https://github.com/Snergster/virl-bootstrap.git
 cd virl-bootstrap
 
 1. sudo ./install_salt.sh
