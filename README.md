@@ -45,19 +45,21 @@ cd virl-bootstap
 
 8. salt-call state.sls zero
 
-9 python ./vinstall salt
+9 python ./vinstall.py salt
 
 10. salt-call state.sls host
 
-verify /etc/network/interfaces is how you like it
+Verify that the IP addresses in /etc/network/interfaces match those outlined in settings.ini
 
 11. sudo reboot
 
-# rest of the steps done as virl
+Log in to the server
+
+Run the remaining steps as 'virl'
 
 cd virl-bootstrap
 
-12. python vinstall all
+12. python ./vinstall.py all
 
 13. sudo salt-call state.sls images
 
