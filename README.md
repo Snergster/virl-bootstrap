@@ -24,11 +24,16 @@ cd virl-bootstrap
 
 3. sudo -s
 
-4. python vinstall.py salt
+3.5 edit extra.conf for your correct id and salt server
+3.6 cp extra.conf /etc/salt/minion.d
+
+4. service salt-minion restart
 
 5. get your salt key accepted on server
 
 6. salt-call state.sls zero
+
+6.5 vinstall salt
 
 7. salt-call state.sls host
 
