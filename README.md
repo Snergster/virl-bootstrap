@@ -33,7 +33,7 @@ cd virl-bootstrap
 
 3. sudo -s
 
-cd virl-bootstap
+cd virl-bootstrap
 
 4 edit extra.conf for your correct id and salt server
 
@@ -42,6 +42,8 @@ cd virl-bootstap
 6. service salt-minion restart
 
 7. get your salt key accepted on server
+
+salt-call test.ping
 
 8. salt-call state.sls zero
 
