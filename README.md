@@ -59,7 +59,7 @@ Log in to the server
 
 Run the remaining steps as 'virl'
 
-12. /usr/local/bin/vinstall.py all
+12. python /usr/local/bin/vinstall all
 
 13. sudo salt-call state.sls images
 
