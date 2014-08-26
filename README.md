@@ -9,6 +9,8 @@ install 14.4.1
 
 default user virl
 
+Login into your VIRL system and enter the following commands
+
 sudo -s
 
 apt-get update
@@ -19,48 +21,50 @@ apt-get install -y python git
 
 reboot
 
-login as virl
+On reboot, login as virl. Enter the following commands
 
 git clone https://github.com/Snergster/virl-bootstrap.git
 
 cd virl-bootstrap
 
-1. sudo ./install_salt.sh
+sudo ./install_salt.sh
 
-2. cp ./vsettings.ini /home/virl/settings.ini
+cp ./vsettings.ini /home/virl/settings.ini
 
-3. customize /home/virl/settings.ini
+Edit /home/virl/settings.ini as required
 
-3. sudo -s
+sudo -s
 
 cd virl-bootstrap
 
-4 edit extra.conf for your correct id and salt server
+Edit extra.conf for your correct id and salt server
 
-5 cp extra.conf /etc/salt/minion.d
+cp extra.conf /etc/salt/minion.d
 
-6. service salt-minion restart
+service salt-minion restart
 
-7. get your salt key accepted on server
+Get your salt key accepted on server
 
 salt-call test.ping
 
-8. salt-call state.sls zero
+Ensure that the result is 'True'
 
-9 python ./vinstall.py salt
+salt-call state.sls zero
 
-10. salt-call state.sls host
+python ./vinstall.py salt
+
+salt-call state.sls host
 
 Verify that the IP addresses in /etc/network/interfaces match those outlined in settings.ini
 
-11. sudo reboot
+sudo reboot
 
-Log in to the server
+Log in to the server as VIRL, Run the remaining steps as 'virl'
 
-Run the remaining steps as 'virl'
+python /usr/local/bin/vinstall all
 
-12. python /usr/local/bin/vinstall all
+The following command will download the VM images and register them. This can be lengthy
 
-13. sudo salt-call state.sls images
+sudo salt-call state.sls images
 
-14. reboot for good measure and your done
+sudo reboot
