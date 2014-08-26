@@ -59,9 +59,7 @@ Log in to the server
 
 Run the remaining steps as 'virl'
 
-cd virl-bootstrap
-
-12. python ./vinstall.py all
+12. /usr/local/bin/vinstall.py all
 
 13. sudo salt-call state.sls images
 
