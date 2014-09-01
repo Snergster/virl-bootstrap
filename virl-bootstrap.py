@@ -10,24 +10,27 @@ salt_append_domain = 'virl.info'
 while_exit = 0
 cwd = path.realpath('./')
 proxy = 'None'
+hostname = 'virl'
+domain = 'virl.info'
 
 while not while_exit:
     print (30 * '-')
     print ("   V I R L - I N S T A L L - M E N U")
     print (30 * '-')
     print ("1. Change salt master from {0} ".format(salt_master))
-    print ("2. Change salt id from {0} ".format(salt_name))
-    print ("3. Change salt domain from {0} ".format(salt_append_domain))
+    print ("2. Change salt id from {0} or salt domain from {1}".format(salt_name, salt_append_domain))
+    print ("3. Change hostname from {0} or domain name {1}".format(hostname, domain))
     print ("4. Write out extra.conf")
     print ("5. Change http proxy from {0}".format(proxy))
     print ("6. install salt without preseed keys")
     print ("7. install salt with preseed keys in {0}".format(cwd + '/preseed_keys'))
     print ("8. Test if you are connected to salt-master")
-    print ("9. install virl installer and settings")
-    print ("10. Exit")
+    print ("9. Install virl installer and settings")
+    print ("10. Edit settings.ini")
+    print ("11. Exit")
     print (30 * '-')
 
-    choice = raw_input('Which step are you on [1-9] : ')
+    choice = raw_input('Which step are you on [1-12] : ')
 
     choice = int(choice)
 
@@ -35,6 +38,7 @@ while not while_exit:
         salt_master = raw_input('Salt master [%s] ' % salt_master)
     if choice == 2:
         salt_name = raw_input('Salt name [%s] ' % salt_name)
+        salt_append_domain = raw_input('Salt domain name [%s] ' % salt_append_domain)
     if choice == 3:
         salt_append_domain = raw_input('Salt domain name [%s] ' % salt_append_domain)
     if choice == 4:
@@ -50,8 +54,8 @@ while not while_exit:
             if not path.exists('/etc/salt'):
                 subprocess.check_output(['mkdir', '-p', '/etc/salt'])
             with open(("/etc/salt/grains"), "w") as grains:
-                extra.write("""proxy: True\n""")
-                extra.write("""http proxy: {proxy}\n""".format(proxy=proxy))
+                grains.write("""proxy: True\n""")
+                grains.write("""http proxy: {proxy}\n""".format(proxy=proxy))
     if choice == 6:
         subprocess.call(['sh', '/home/virl/virl-bootstrap/install_salt.sh'])
     if choice == 7:
@@ -61,5 +65,26 @@ while not while_exit:
     if choice == 9:
         subprocess.check_output(['salt-call', 'state.sls', 'zero'])
     if choice == 10:
+        if not path.exists('/home/virl/settings.ini'):
+            subprocess.call(['cp', '/home/virl/vsettings.ini', '/home/virl/settings.ini'])
+        subprocess.call(['crudini', '--set','/home/virl/settings.ini', 'operational',
+                         'salt master', salt_master])
+        subprocess.call(['crudini', '--set','/home/virl/settings.ini', 'operational',
+                         'salt id', salt_name])
+        subprocess.call(['crudini', '--set','/home/virl/settings.ini', 'operational',
+                         'salt domain', salt_append_domain])
+        if not proxy == 'None':
+            subprocess.call(['crudini', '--set','/home/virl/settings.ini', 'changeable',
+                         'proxy', 'True'])
+            subprocess.call(['crudini', '--set','/home/virl/settings.ini', 'changeable',
+                         'http proxy', proxy])
+        if not hostname == 'virl' or not domain == 'virl.info':
+            subprocess.call(['crudini', '--set','/home/virl/settings.ini', 'changeable',
+                         'hostname', hostname ])
+            subprocess.call(['crudini', '--set','/home/virl/settings.ini', 'changeable',
+                         'domain', domain])
+
+    if choice == 11:
+        subprocess.check_output(['/usr/local/bin/vinstall', 'salt'])
         while_exit = 1
 
