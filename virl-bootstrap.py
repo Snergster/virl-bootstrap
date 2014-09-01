@@ -63,9 +63,9 @@ while not while_exit:
     if choice == 7:
         subprocess.call(['sh', '/home/virl/virl-bootstrap/install_salt.sh', '-k', (cwd + '/preseed_keys')])
     if choice == 8:
-        subprocess.check_output(['salt-call', 'test.ping'])
+        subprocess.call(['salt-call', 'test.ping'])
     if choice == 9:
-        subprocess.check_output(['salt-call', 'state.sls', 'zero'])
+        subprocess.call(['salt-call', 'state.sls', 'zero'])
     if choice == 10:
         if not path.exists('/home/virl/settings.ini'):
             subprocess.call(['cp', '/home/virl/vsettings.ini', '/home/virl/settings.ini'])
