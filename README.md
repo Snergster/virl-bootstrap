@@ -55,19 +55,21 @@ Execute step 8 until that the result is 'True'
 
 ###salt-call state.sls zero
 
-exit
+###exit
 
-cd /home/virl
+###cd /home/virl
 
-cp vsettings.ini settings.ini
+###cp vsettings.ini settings.ini
 
-Edit /home/virl/settings.ini as required,  Ensure changes made in bootstrap are reflected in settings.ini
+###Edit /home/virl/settings.ini as required,  Ensure changes made in bootstrap are reflected in settings.ini
 
 ####python ./vinstall.py salt
 
-vinstall salt
+###vinstall salt
 
-vinstall first
+###vinstall first
+
+Continue through step 11
 
 Verify that the IP addresses in /etc/network/interfaces match those outlined in settings.ini
 

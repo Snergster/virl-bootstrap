@@ -3,6 +3,7 @@ __author__ = 'ejk'
 
 import subprocess
 from os import path
+from time import sleep
 
 salt_master = 'salt-master.cisco.com'
 salt_name = 'virl'
@@ -30,7 +31,7 @@ while not while_exit:
     print ("11. Exit")
     print (30 * '-')
 
-    choice = raw_input('Which step are you on [1-12] : ')
+    choice = raw_input('Which step are you on [1-11] : ')
 
     choice = int(choice)
 
@@ -84,8 +85,11 @@ while not while_exit:
                          'hostname', hostname ])
             subprocess.call(['crudini', '--set','/home/virl/settings.ini', 'changeable',
                          'domain', domain])
+        subprocess.call(['/usr/bin/nano', '/home/virl/settings.ini'])
 
     if choice == 11:
-        subprocess.check_output(['/usr/local/bin/vinstall', 'salt'])
+        subprocess.call(['/usr/local/bin/vinstall', 'salt'])
+        sleep(5)
+        subprocess.call(['/usr/local/bin/vinstall', 'first'])
         while_exit = 1
 
