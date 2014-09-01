@@ -40,7 +40,8 @@ while not while_exit:
         salt_name = raw_input('Salt name [%s] ' % salt_name)
         salt_append_domain = raw_input('Salt domain name [%s] ' % salt_append_domain)
     if choice == 3:
-        salt_append_domain = raw_input('Salt domain name [%s] ' % salt_append_domain)
+        hostname = raw_input('System hostname [%s] ' % hostname)
+        domain = raw_input('System Domain name [%s] ' % domain)
     if choice == 4:
         if not path.exists('/etc/salt/minion.d'):
             subprocess.check_output(['mkdir', '-p', '/etc/salt/minion.d'])
