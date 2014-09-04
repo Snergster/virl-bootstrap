@@ -33,43 +33,76 @@ sudo -s
 
 ./virl-bootstrap.py
 
-###cp ./vsettings.ini /home/virl/settings.ini
+You are now presented with a menu. Proceed through the steps sequentially.
 
-###Edit /home/virl/settings.ini as required
+NOTE - if you abort the menu sequence and restart, you MUST re-enter the information into the menu fields once more.
 
-###sudo -s
+Step 1 - Change salt master from salt-master.cisco.com 
 
-###cd virl-bootstrap
+- You may have received instructions to use a specific 'salt master', if so, enter the salt master hostname here. If you enter this step, you MUST enter a value. The fields must NOT be blank!
 
-###Edit extra.conf for your correct id and salt server
+Step 2 - Change salt id from virl or salt domain from virl.info
 
-###cp extra.conf /etc/salt/minion.d
+- You may have received instructions to use a specific 'salt id' and 'salt domain', if so, enter the provided values here. If you enter this step, you MUST enter a value. The fields must NOT be blank!
 
-###service salt-minion restart
+Step 3 - Change hostname or domain name
 
-After steps 1-7
+- Set the hostname and domain name for your server here, for example, virl-1.mynet.com. If you enter this step, you MUST enter a value. The fields must NOT be blank!
 
-Get your salt key accepted on server.  Skip if preseed was done.
+Step 4 - Write out extra.conf
 
-Execute step 8 until that the result is 'True'
+- MUST perform this step even if you have not made any changes in steps 1-3
 
-###salt-call state.sls zero
+Step 5 - Change http proxy
 
-###exit
+- If you are behind a proxy, please set this here
 
-###cd /home/virl
+Step 6 - install salt without preseed keys
 
-###cp vsettings.ini settings.ini
+- If you have NOT been provided with a 'preseed' key, select 6, otherwise skip to Step 7
 
-###Edit /home/virl/settings.ini as required,  Ensure changes made in bootstrap are reflected in settings.ini
+Step 7 - install salt with preseed keys in /home/virl/virl-bootstrap/preseed_keys
 
-####python ./vinstall.py salt
+- If you have been provided with a 'preseed' key set and have please the keys in the preseed_keys directory, the select 7.
 
-###vinstall salt
+After steps 6 or 7, software will be installed and configured. You must see the following message returned before proceeding to Step 8:
 
-###vinstall first
+salt-minion start/running, process ####
+ *  INFO: Running daemons_running()
+ *  INFO: Salt installed!
 
-Continue through step 11
+Step 8 - Test if you are connected to salt-master
+
+- Ensure that you received a return value 'True' before trying to proceed. If you do not, you need to contact your administrator to confirm that you have the correct key and the key has been accepted.
+
+Step 9 - Install virl installer and settings
+
+- Ensure that the step completed and reports no 'Failed' values
+
+Step 10 - Edit settings.ini
+
+- Modify the content of the settings.ini to meet you needs. The hostname and domain name values will already contain the values you entered in Step 3. HTTP proxy will contain the values entered in Step 5. Main areas to check are as follows:
+
+-- using dhcp on the public port?
+-- Static IP, public_network, public_netmask, public_gateway
+-- ntp_server
+-- l2_network (CIDR format),l2_mask, l2_network_gateway, l2_start_address, l2_end_address, l2_address (address/netmask)
+-- l2_network2 (CIDR format), l2_mask2, l2_network_gateway2, l2_start_address2, l2_end_address2, l2_address2 (address/netmask)
+-- l3_network (CIDR format), l3_mask, l3 network gateway, l3_floating_start_address, l3_floating_end_address, l3_address (address/netmask)
+-- ramdisk
+-- location region
+-- guest account
+-- desktop
+
+- Save your settings.ini changes (CTRL^O) and exit (CTRL^X)
+
+NOTE - if you abort the menu sequence and restart, you MUST re-enter the information into the menu fields (Steps 1 to 5) once more.
+
+Step 11 - Exit
+
+- Software will now be configured
+
+NOTE - if you abort the menu sequence and restart, you MUST re-enter the information into the menu fields (Steps 1 to 5) once more.
 
 Verify that the IP addresses in /etc/network/interfaces match those outlined in settings.ini
 
@@ -77,12 +110,40 @@ sudo reboot
 
 Log in to the server as VIRL, Run the remaining steps as 'virl'
 
-###python /usr/local/bin/vinstall all
-
 vinstall all
 
 The following command will download the VM images and register them. This can be lengthy
 
 sudo salt-call state.sls router-vms
 
+Complete the installation by rebooting the system.
+
 sudo reboot
+
+On reboot, log in as 'virl' and issue the command:
+
+virl_health_status
+
+Ensure that the following lines are present in the output:
+
+RabbitMQ status:
+[{pid,####},
+
+OpenStack identity service for STD is available
+OpenStack image service for STD is available
+OpenStack compute service for STD is available
+OpenStack network service for STD is available
+
+OpenStack services: (ALL SERVICES REPORT 'ENABLED' 'UP'):
+
+nova-consoleauth
+nova-scheduler
+nova-conductor
+nova-cert
+nova-compute
+
+STD server on url http://localhost:##### is listening, server version 0.10.6.5
+UWM server on url http://localhost:##### is listening, server version 0.10.6.5
+
+{u'autonetkit-cisco-version': u'VIRL Configuration Engine #.#.#',
+ u'autonetkit-version': u'autonetkit #.#.#',
