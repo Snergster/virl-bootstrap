@@ -146,8 +146,8 @@ nova-conductor
 nova-cert
 nova-compute
 
-STD server on url http://localhost:##### is listening, server version 0.10.6.5
-UWM server on url http://localhost:##### is listening, server version 0.10.6.5
+STD server on url http://localhost:##### is listening, server version x.x.x.x
+UWM server on url http://localhost:##### is listening, server version x.x.x.x
 
 {u'autonetkit-cisco-version': u'VIRL Configuration Engine #.#.#',
  u'autonetkit-version': u'autonetkit #.#.#',
