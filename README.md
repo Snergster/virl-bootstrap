@@ -86,6 +86,8 @@ Step 10 - Edit settings.ini
 -- using dhcp on the public port?
 -- Static IP, public_network, public_netmask, public_gateway
 -- ntp_server
+-- first nameserver 
+-- second nameserver
 -- l2_network (CIDR format),l2_mask, l2_network_gateway, l2_start_address, l2_end_address, l2_address (address/netmask)
 -- l2_network2 (CIDR format), l2_mask2, l2_network_gateway2, l2_start_address2, l2_end_address2, l2_address2 (address/netmask)
 -- l3_network (CIDR format), l3_mask, l3 network gateway, l3_floating_start_address, l3_floating_end_address, l3_address (address/netmask)
@@ -93,6 +95,8 @@ Step 10 - Edit settings.ini
 -- location region
 -- guest account
 -- desktop
+
+NOTE - ensure that you have reachability to your ntp server. If you are using DHCP, you do not need to alter the 'first nameserver' and 'second nameserver' fields. If you are using static IP addressing, ensure that you have reachability to your nameservers.
 
 - Save your settings.ini changes (CTRL^O) and exit (CTRL^X)
 
