@@ -124,9 +124,9 @@ snat_dns2 = safeparser.get('changeable', 'second snat nameserver', fallback='8.8
 location_region = safeparser.get('changeable', 'location region', fallback='US')
 vnc = safeparser.getboolean('changeable', 'vnc', fallback=False)
 vnc_passwd = safeparser.get('changeable', 'vnc password', fallback='letmein')
-uwmadmin_passwd = safeparser.get('changeable', 'uwmadmin password', fallback='password')
-#Install section
 
+#Install section
+uwmadmin_passwd = safeparser.get('install', 'uwmadmin password', fallback='password')
 ospassword = safeparser.get('install', 'password', fallback='password')
 mypassword = safeparser.get('install', 'mysql_password', fallback='password')
 ks_token = safeparser.get('install', 'keystone_service_token', fallback='fkgjhsdflkjh')
@@ -142,7 +142,7 @@ cinder_file = safeparser.getboolean('install', 'cinder file', fallback=True)
 cinder_size = safeparser.get('install', 'cinder size', fallback=False)
 cinder_loc = safeparser.get('install', 'cinder location', fallback='/var/lib/cinder/cinder-volumes.lvm')
 neutron_switch = safeparser.get('install', 'neutron switch', fallback='linuxbridge')
-
+desktop = safeparser.getboolean('install', 'desktop', fallback=False)
 
 #Packaging section
 cariden = safeparser.getboolean('packaging', 'cariden', fallback=False)
@@ -166,11 +166,11 @@ image_set = safeparser.get('operational', 'image set', fallback='internal')
 salt = safeparser.getboolean('operational', 'salt?', fallback=True)
 salt_master = safeparser.get('operational', 'salt master', fallback='none')
 salt_id = safeparser.get('operational', 'salt id', fallback='virl')
-salt_domain = safeparser.get('operational', 'salt domain', fallback='info')
+salt_domain = safeparser.get('operational', 'salt domain', fallback='virl.info')
 virl_type = safeparser.get('operational', 'Is this a stable or testing server', fallback='stable')
 cisco_internal = safeparser.getboolean('operational', 'inside cisco?', fallback=False)
 onedev = safeparser.getboolean('operational', 'onedev', fallback=False)
-desktop = safeparser.getboolean('operational', 'desktop', fallback=False)
+
 
 #Testing Section
 icehouse = safeparser.getboolean('testing', 'icehouse?', fallback=True)
@@ -325,8 +325,8 @@ def create_basic_networks():
     subprocess.call(qcall + ['quota-update', '--router', '-1'])
     try:
         if not varg['iso']:
-            system(cpstr % {'from': (BASEDIR + 'install_scripts/init.d/virl-uwm.init'), 'to': '/etc/init.d/virl-uwm'})
-            system(lnstr % {'orig': '/etc/init.d/virl-uwm', 'link': '/etc/rc2.d/S98virl-uwm'})
+            # system(cpstr % {'from': (BASEDIR + 'install_scripts/init.d/virl-uwm.init'), 'to': '/etc/init.d/virl-uwm'})
+            # system(lnstr % {'orig': '/etc/init.d/virl-uwm', 'link': '/etc/rc2.d/S98virl-uwm'})
 
             if 'ext-net' not in subprocess.check_output(qcall + ['net-list']):
                 subprocess.call(qcall + ['net-create', 'ext-net', '--shared', '--provider:network_type', 'flat',
@@ -441,14 +441,15 @@ net.ipv4.tcp_keepalive_intvl=60
         system(cpstr % {'from': '/tmp/sysctl.conf', 'to': '/etc/sysctl.conf'})
     print ('added keepalive')
 
-def place_startup_scripts():
-    if not horizon:
-        subprocess.call(['sudo', 'cp', '-f', (BASEDIR + 'install_scripts/index.html'), '/var/www/index.html'])
+# def place_startup_scripts():
+#     ##TODO: salt the no horizon html case
+#     if not horizon:
+#         subprocess.call(['sudo', 'cp', '-f', (BASEDIR + 'install_scripts/index.html'), '/var/www/index.html'])
     # subprocess.call(['sudo', 'cp', '-f', (BASEDIR + 'install_scripts/init.d/50-default.conf'),
     #                  ('/etc/rsyslog.d/50-default.conf')])
-    subprocess.call(
-        ['sudo', 'cp', '-f', (BASEDIR + 'vinstall.py'), '/usr/local/bin/vinstall'])
-    subprocess.call(['sudo', 'chmod', '755', '/usr/local/bin/vinstall'])
+    # subprocess.call(
+    #     ['sudo', 'cp', '-f', (BASEDIR + 'vinstall.py'), '/usr/local/bin/vinstall'])
+    # subprocess.call(['sudo', 'chmod', '755', '/usr/local/bin/vinstall'])
 
     # system(cpstr % {'from': (BASEDIR + 'install_scripts/init.d/ank-webserver.init'),
     #                 'to': '/etc/init.d/ank-webserver'})
@@ -472,8 +473,8 @@ def place_startup_scripts():
     #     cpstr % {'from': (BASEDIR + 'install_scripts/init.d/virl-std.init'), 'to': '/etc/init.d/virl-std'})
     # system(
     #     cpstr % {'from': (BASEDIR + 'install_scripts/init.d/virl-uwm.init'), 'to': '/etc/init.d/virl-uwm'})
-    subprocess.call(
-        ['sudo', 'chmod', '755', '/usr/local/bin/vinstall'])
+    # subprocess.call(
+    #     ['sudo', 'chmod', '755', '/usr/local/bin/vinstall'])
          #'/etc/init.d/ank-webserver', '/etc/init.d/virl-std', '/etc/init.d/virl-uwm'])
     #Edit the autonetkit file and move into place
     # replace((BASEDIR + 'install_scripts/orig/autonetkit.cfg'), 'ANKPORT', ank)
@@ -518,7 +519,7 @@ def fix_ntp():
 
 def apache_write():
 
-    with open((BASEDIR + "install_scripts/apache.conf"), "w") as apache:
+    with open(("/tmp/apache.conf"), "w") as apache:
         apache.write("""Alias /download /var/www/download\n
 
 <Directory \"/var/www/download\">
@@ -546,7 +547,7 @@ Alias /videos /var/www/videos
     Options Indexes FollowSymLinks MultiViews
     IndexOptions NameWidth=*
 </Directory>\n""")
-    subprocess.call(['sudo', 'cp', '-f', (BASEDIR + 'install_scripts/apache.conf'),
+    subprocess.call(['sudo', 'cp', '-f', ('/tmp/apache.conf'),
                          '/etc/apache2/sites-enabled/apache.conf'])
 
 
@@ -898,6 +899,7 @@ def domodification(ospassword, mypassword, ks_token):
         subprocess.call(['sed', '-i', ('s/--port .*/--port {0}"/g'.format(ank)),
                          (BASEDIR + 'install_scripts/init.d/ank-webserver.init')])
         copy((BASEDIR + 'install_scripts/bashrc'), ( '/home/virl/.bashrc'))
+        copy((BASEDIR + 'install_scripts/bash.profile'), ( '/home/virl/.bash_profile'))
     except subprocess.CalledProcessError as err:
         log.error('proxy sed do FAIL', err)
 
@@ -923,40 +925,23 @@ if __name__ == "__main__":
         print ' Your salt key needs to be accepted by salt master before continuing\n'
         print ' You can test with salt-call test.ping for ok result'
 
-    if varg['first'] or varg['all']:
-        for _each in ['zero','first','host']:
+    if varg['first']:
+        for _each in ['zero', 'host', 'first']:
             call_salt(_each)
-        # subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'zero'])
-        # subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'first'])
-        # subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'host'])
         print 'Please validate the contents of /etc/network/interfaces before rebooting!'
+    # if varg['second'] or varg['all']:
+    #     # for _each in ['zero','first','host']:
+    #     call_salt('first')
+    #     # subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'zero'])
+    #     # subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'first'])
+    #     # subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'host'])
+
     if varg['second'] or varg['all']:
         for _each in ['mysql-install','rabbitmq-install','keystone-install','keystone-setup','keystone-setup',
                       'keystone-endpoint','osclients','openrc','glance-install','neutron-install']:
             call_salt(_each)
-        # subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'mysql-install'])
-        # sleep(5)
-        # subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'rabbitmq-install'])
-        # sleep(5)
-        # subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'keystone-install'])
-        # sleep(5)
-        # subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'keystone-setup'])
-        # sleep(5)
-        # #TODO stupid ordering failure still a plague
-        # subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'keystone-setup'])
-        # sleep(5)
-        # subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'keystone-endpoint'])
-        # sleep(5)
-        # subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'osclients'])
-        # sleep(5)
-        # subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'openrc'])
-        # sleep(5)
-        # subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'glance-install'])
-        # sleep(5)
-        # subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'neutron-install'])
-        # sleep(5)
-        # subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'vmm-download-external'])
-        # sleep(5)
+
+    if varg['third'] or varg['all']:
         if cinder:
             call_salt('cinder-install')
             # subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'cinder-install'])
@@ -973,7 +958,7 @@ if __name__ == "__main__":
             call_salt('dash-install')
             # subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'dash-install'])
             # sleep(5)
-    if varg['second'] or varg['all']:
+
         admin_tenid = (subprocess.check_output(['/usr/bin/keystone --os-tenant-name admin --os-username admin'
                                             ' --os-password {ospassword} --os-auth-url=http://localhost:5000/v2.0'
                                             ' tenant-list | grep -w "admin" | cut -d "|" -f2'
@@ -998,7 +983,7 @@ if __name__ == "__main__":
         sleep(5)
         call_salt('neutron_changes')
         # subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'neutron_changes'])
-        place_startup_scripts()
+        # place_startup_scripts()
         apache_write()
         if vnc:
             subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'tightvncserver'])
@@ -1014,7 +999,9 @@ if __name__ == "__main__":
         subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'std'])
         sleep(5)
         subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'ank'])
-        std_install()
+        if guest_account:
+            call_salt('guest')
+        # std_install()
         User_Creator(user_list, user_list_limited)
         print ('You need to restart now')
     if varg['test']:
@@ -1026,13 +1013,13 @@ if __name__ == "__main__":
     if desktop:
         if varg['desktop']:
             subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'desktop'])
-            _xterm = 'xterm -e %s'
-            subprocess.call(['sudo', 'crudini', '--set','/home/virl/.config/libfm/libfm.conf', 'config', 'terminal',
-                             _xterm ])
-            subprocess.call(['sudo', 'crudini', '--set','/etc/xdg/lubuntu/libfm/libfm.conf', 'config', 'terminal',
-                             _xterm ])
-            subprocess.call(['sudo', 'crudini', '--set','/etc/lightdm/lightdm.conf.d/20-lubuntu.conf',
-                     'SeatDefaults', 'allow-guest', ' False'])
+            # _xterm = 'xterm -e %s'
+            # subprocess.call(['sudo', 'crudini', '--set','/home/virl/.config/libfm/libfm.conf', 'config', 'terminal',
+            #                  _xterm ])
+            # subprocess.call(['sudo', 'crudini', '--set','/etc/xdg/lubuntu/libfm/libfm.conf', 'config', 'terminal',
+            #                  _xterm ])
+            # subprocess.call(['sudo', 'crudini', '--set','/etc/lightdm/lightdm.conf.d/20-lubuntu.conf',
+            #          'SeatDefaults', 'allow-guest', ' False'])
             desktop_icons()
 
             sleep(5)
@@ -1104,10 +1091,15 @@ if __name__ == "__main__":
         if not vnc_passwd == 'letmein':
             set_vnc_password(vnc_passwd)
         if RAMDISK:
-            subprocess.call(['sudo', '-s', (BASEDIR + 'install_scripts/vsetup_ramdisk')])
+            # subprocess.call(['sudo', '-s', (BASEDIR + 'install_scripts/vsetup_ramdisk')])
+            call_salt('nova-install')
         User_Creator(user_list, user_list_limited)
         call_salt('images')
-        # Net_Creator('guest','guest')
+        if guest_account:
+            Net_Creator('guest','guest')
+        else:
+            subprocess.call(['sudo', 'virl_uwm_client', 'project-delete', '--name', 'guest'])
+
         #subprocess.call(['sudo', 'service', 'networking', 'restart'])
         subprocess.call(['rm', '/home/virl/Desktop/Edit-settings.desktop'])
         subprocess.call(['rm', '/home/virl/Desktop/Reboot2.desktop'])
@@ -1132,3 +1124,5 @@ if __name__ == "__main__":
         else:
             subprocess.call(['cp', '-f', (BASEDIR + 'vsettings.ini'), '/home/virl/settings.ini'])
 
+    if path.exists('/tmp/install.out'):
+        subprocess.call(['sudo', 'rm', '/tmp/install.out'])
