@@ -27,7 +27,7 @@ while not while_exit:
     print ("7. install salt with preseed keys in {0}".format(cwd + '/preseed_keys'))
     print ("8. Test if you are connected to salt-master")
     print ("9. Install virl installer and settings")
-    print ("10. Edit settings.ini")
+    print ("10. Edit /etc/virl.ini")
     print ("11. Exit")
     print (30 * '-')
 
@@ -52,8 +52,9 @@ while not while_exit:
             extra.write("""master: {salt_master}\n""".format(salt_master=salt_master))
             extra.write("""id: {salt_name}\n""".format(salt_name=salt_name))
             extra.write("""append_domain: {salt_append_domain}\n""".format(salt_append_domain=salt_append_domain))
-            extra.write("""grains_dirs:\n""")
-            extra.write("""  - /etc/salt/virl\n""")
+            ##TODO waiting for salt to put this back in
+            # extra.write("""grains_dirs:\n""")
+            # extra.write("""  - /etc/salt/virl\n""")
 
     if choice == 5:
         proxy = raw_input('Http proxy [%s] ' % proxy)
