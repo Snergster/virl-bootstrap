@@ -43,154 +43,157 @@ log.addHandler(conhand)
 
 
 safeparser = configparser.ConfigParser()
-safeparser_file = '/home/virl/settings.ini'
+safeparser_file = '/etc/settings.ini'
+safeparser_backup_file = '/home/virl/vsettings.ini'
 if path.exists(safeparser_file):
-    safeparser.read('/home/virl/settings.ini')
+    safeparser.read('/etc/settings.ini')
+elif path.exists(safeparser_backup_file):
+    safeparser.read('/home/virl/vsettings.ini')
 else:
     safeparser.read('./settings.ini')
-changeable = safeparser['changeable']
-install = safeparser['install']
-operational = safeparser['operational']
-packaging = safeparser['packaging']
-testing = safeparser['testing']
-cluster = safeparser['cluster']
+DEFAULT = safeparser['DEFAULT']
+# install = safeparser['install']
+# operational = safeparser['operational']
+# packaging = safeparser['packaging']
+# testing = safeparser['testing']
+# cluster = safeparser['cluster']
 
 
-hostname = safeparser.get('changeable', 'hostname', fallback='virl')
-fqdn = safeparser.get('changeable', 'domain', fallback='cisco.com')
+hostname = safeparser.get('DEFAULT', 'hostname', fallback='virl')
+fqdn = safeparser.get('DEFAULT', 'domain', fallback='cisco.com')
 
-dhcp_public = safeparser.getboolean('changeable', 'using dhcp on the public port?', fallback=True)
-public_port = safeparser.get('changeable', 'public_port', fallback='eth0')
-public_ip = safeparser.get('changeable', 'Static IP', fallback='127.0.0.1')
-public_network = safeparser.get('changeable', 'public_network', fallback='172.16.6.0')
-public_netmask = safeparser.get('changeable', 'public_netmask', fallback='255.255.255.0')
-public_gateway = safeparser.get('changeable', 'public_gateway', fallback='172.16.6.1')
-proxy = safeparser.getboolean('changeable', 'proxy', fallback=False)
-http_proxy = safeparser.get('changeable', 'http proxy', fallback='http://proxy-wsa.esl.cisco.com:80/')
-ntp_server = safeparser.get('changeable', 'ntp_server', fallback='ntp.ubuntu.com')
-dns1 = safeparser.get('changeable', 'first nameserver', fallback='8.8.8.8')
-dns2 = safeparser.get('changeable', 'second nameserver', fallback='171.70.168.183')
+dhcp_public = safeparser.getboolean('DEFAULT', 'using_dhcp_on_the_public_port', fallback=True)
+public_port = safeparser.get('DEFAULT', 'public_port', fallback='eth0')
+public_ip = safeparser.get('DEFAULT', 'Static_IP', fallback='127.0.0.1')
+public_network = safeparser.get('DEFAULT', 'public_network', fallback='172.16.6.0')
+public_netmask = safeparser.get('DEFAULT', 'public_netmask', fallback='255.255.255.0')
+public_gateway = safeparser.get('DEFAULT', 'public_gateway', fallback='172.16.6.1')
+proxy = safeparser.getboolean('DEFAULT', 'proxy', fallback=False)
+http_proxy = safeparser.get('DEFAULT', 'http_proxy', fallback='http://proxy-wsa.esl.cisco.com:80/')
+ntp_server = safeparser.get('DEFAULT', 'ntp_server', fallback='ntp.ubuntu.com')
+dns1 = safeparser.get('DEFAULT', 'first_nameserver', fallback='8.8.8.8')
+dns2 = safeparser.get('DEFAULT', 'second_nameserver', fallback='171.70.168.183')
 
 
-l2_port = safeparser.get('changeable', 'l2_port', fallback='eth1')
-l2_mask = safeparser.get('changeable', 'l2_mask', fallback='255.255.255.0')
-l2_bridge_port = safeparser.get('changeable', 'l2_bridge_port', fallback='br-eth1')
-l2_address = safeparser.get('changeable', 'l2_address', fallback='172.16.1.254')
-l2_network = safeparser.get('changeable', 'l2_network', fallback='172.16.1.0/24')
-l2_gate = safeparser.get('changeable', 'l2_network_gateway', fallback='172.16.1.1')
-l2_s_address = safeparser.get('changeable', 'l2_start_address', fallback='172.16.1.50')
-l2_e_address = safeparser.get('changeable', 'l2_end_address', fallback='172.16.1.250')
-# address_l2_port = safeparser.getboolean('changeable', 'address l2 port', fallback=True)
+l2_port = safeparser.get('DEFAULT', 'l2_port', fallback='eth1')
+l2_mask = safeparser.get('DEFAULT', 'l2_mask', fallback='255.255.255.0')
+l2_bridge_port = safeparser.get('DEFAULT', 'l2_bridge_port', fallback='br-eth1')
+l2_address = safeparser.get('DEFAULT', 'l2_address', fallback='172.16.1.254')
+l2_network = safeparser.get('DEFAULT', 'l2_network', fallback='172.16.1.0/24')
+l2_gate = safeparser.get('DEFAULT', 'l2_network_gateway', fallback='172.16.1.1')
+l2_s_address = safeparser.get('DEFAULT', 'l2_start_address', fallback='172.16.1.50')
+l2_e_address = safeparser.get('DEFAULT', 'l2_end_address', fallback='172.16.1.250')
+# address_l2_port = safeparser.getboolean('DEFAULT', 'address l2 port', fallback=True)
 address_l2_port = True
-flat_dns1 = safeparser.get('changeable', 'first flat nameserver', fallback='8.8.8.8')
-flat_dns2 = safeparser.get('changeable', 'second flat nameserver', fallback='8.8.4.4')
+flat_dns1 = safeparser.get('DEFAULT', 'first_flat_nameserver', fallback='8.8.8.8')
+flat_dns2 = safeparser.get('DEFAULT', 'second_flat_nameserver', fallback='8.8.4.4')
 
-l2_port2_enabled = safeparser.getboolean('changeable', 'l2_port2_enabled', fallback=True)
-l2_port2 = safeparser.get('changeable', 'l2_port2', fallback='eth2')
-l2_mask2 = safeparser.get('changeable', 'l2_mask2', fallback='255.255.255.0')
-l2_bridge_port2 = safeparser.get('changeable', 'l2_bridge_port2', fallback='br-eth2')
-l2_address2 = safeparser.get('changeable', 'l2_address2', fallback='172.16.2.254')
-l2_network2 = safeparser.get('changeable', 'l2_network2', fallback='172.16.2.0/24')
-l2_gate2 = safeparser.get('changeable', 'l2_network_gateway2', fallback='172.16.2.1')
-l2_s_address2 = safeparser.get('changeable', 'l2_start_address2', fallback='172.16.2.50')
-l2_e_address2 = safeparser.get('changeable', 'l2_end_address2', fallback='172.16.2.250')
-# address_l2_port2 = safeparser.getboolean('changeable', 'address l2 port2', fallback=True)
+l2_port2_enabled = safeparser.getboolean('DEFAULT', 'l2_port2_enabled', fallback=True)
+l2_port2 = safeparser.get('DEFAULT', 'l2_port2', fallback='eth2')
+l2_mask2 = safeparser.get('DEFAULT', 'l2_mask2', fallback='255.255.255.0')
+l2_bridge_port2 = safeparser.get('DEFAULT', 'l2_bridge_port2', fallback='br-eth2')
+l2_address2 = safeparser.get('DEFAULT', 'l2_address2', fallback='172.16.2.254')
+l2_network2 = safeparser.get('DEFAULT', 'l2_network2', fallback='172.16.2.0/24')
+l2_gate2 = safeparser.get('DEFAULT', 'l2_network_gateway2', fallback='172.16.2.1')
+l2_s_address2 = safeparser.get('DEFAULT', 'l2_start_address2', fallback='172.16.2.50')
+l2_e_address2 = safeparser.get('DEFAULT', 'l2_end_address2', fallback='172.16.2.250')
+# address_l2_port2 = safeparser.getboolean('DEFAULT', 'address l2 port2', fallback=True)
 address_l2_port2 = True
-flat2_dns1 = safeparser.get('changeable', 'first flat2 nameserver', fallback='8.8.8.8')
-flat2_dns2 = safeparser.get('changeable', 'second flat2 nameserver', fallback='8.8.4.4')
+flat2_dns1 = safeparser.get('DEFAULT', 'first_flat2_nameserver', fallback='8.8.8.8')
+flat2_dns2 = safeparser.get('DEFAULT', 'second_flat2_nameserver', fallback='8.8.4.4')
 
 
-RAMDISK = safeparser.getboolean('changeable', 'ramdisk', fallback=False)
-ank = safeparser.get('changeable', 'ank', fallback='19401')
-uwm_port = safeparser.get('changeable', 'virl user management', fallback='19400')
-wsgi_port = safeparser.get('changeable', 'virl webservices', fallback='19399')
-serial_start = safeparser.get('changeable', 'Start of serial port range', fallback='17000')
-serial_end = safeparser.get('changeable', 'End of serial port range', fallback='18000')
+RAMDISK = safeparser.getboolean('DEFAULT', 'ramdisk', fallback=False)
+ank = safeparser.get('DEFAULT', 'ank', fallback='19401')
+uwm_port = safeparser.get('DEFAULT', 'virl_user_management', fallback='19400')
+wsgi_port = safeparser.get('DEFAULT', 'virl_webservices', fallback='19399')
+serial_start = safeparser.get('DEFAULT', 'Start_of_serial_port_range', fallback='17000')
+serial_end = safeparser.get('DEFAULT', 'End_of_serial_port_range', fallback='18000')
 
-guest_account = safeparser.getboolean('changeable', 'guest account', fallback=True)
-user_list = safeparser.get('changeable', 'user list', fallback='')
-user_list_limited = safeparser.get('changeable', 'restricted users', fallback='')
+guest_account = safeparser.getboolean('DEFAULT', 'guest_account', fallback=True)
+user_list = safeparser.get('DEFAULT', 'user_list', fallback='')
+user_list_limited = safeparser.get('DEFAULT', 'restricted_users', fallback='')
 
-l3_port = safeparser.get('changeable', 'l3_port', fallback='eth3')
-l3_mask = safeparser.get('changeable', 'l3_mask', fallback='255.255.255.0')
-l3_bridge_port = safeparser.get('changeable', 'l3_bridge_port', fallback='br-ex')
-l3_s_address = safeparser.get('changeable', 'l3_floating_start_address', fallback='172.16.3.50')
-l3_e_address = safeparser.get('changeable', 'l3_floating_end_address', fallback='172.16.3.250')
-l3_address = safeparser.get('changeable', 'l3_address', fallback='172.16.3.254')
-l3_gate = safeparser.get('changeable', 'l3 network gateway', fallback='172.16.3.1')
-l3_network = safeparser.get('changeable', 'l3_network', fallback='172.16.3.0/24')
-snat_dns1 = safeparser.get('changeable', 'first snat nameserver', fallback='8.8.8.8')
-snat_dns2 = safeparser.get('changeable', 'second snat nameserver', fallback='8.8.4.4')
-location_region = safeparser.get('changeable', 'location region', fallback='US')
-vnc = safeparser.getboolean('changeable', 'vnc', fallback=False)
-vnc_passwd = safeparser.get('changeable', 'vnc password', fallback='letmein')
+l3_port = safeparser.get('DEFAULT', 'l3_port', fallback='eth3')
+l3_mask = safeparser.get('DEFAULT', 'l3_mask', fallback='255.255.255.0')
+l3_bridge_port = safeparser.get('DEFAULT', 'l3_bridge_port', fallback='br-ex')
+l3_s_address = safeparser.get('DEFAULT', 'l3_floating_start_address', fallback='172.16.3.50')
+l3_e_address = safeparser.get('DEFAULT', 'l3_floating_end_address', fallback='172.16.3.250')
+l3_address = safeparser.get('DEFAULT', 'l3_address', fallback='172.16.3.254')
+l3_gate = safeparser.get('DEFAULT', 'l3_network_gateway', fallback='172.16.3.1')
+l3_network = safeparser.get('DEFAULT', 'l3_network', fallback='172.16.3.0/24')
+snat_dns1 = safeparser.get('DEFAULT', 'first_snat_nameserver', fallback='8.8.8.8')
+snat_dns2 = safeparser.get('DEFAULT', 'second_snat_nameserver', fallback='8.8.4.4')
+location_region = safeparser.get('DEFAULT', 'location_region', fallback='US')
+vnc = safeparser.getboolean('DEFAULT', 'vnc', fallback=False)
+vnc_passwd = safeparser.get('DEFAULT', 'vnc_password', fallback='letmein')
 
 #Install section
-uwmadmin_passwd = safeparser.get('install', 'uwmadmin password', fallback='password')
-ospassword = safeparser.get('install', 'password', fallback='password')
-mypassword = safeparser.get('install', 'mysql_password', fallback='password')
-ks_token = safeparser.get('install', 'keystone_service_token', fallback='fkgjhsdflkjh')
+uwmadmin_passwd = safeparser.get('DEFAULT', 'uwmadmin_password', fallback='password')
+ospassword = safeparser.get('DEFAULT', 'password', fallback='password')
+mypassword = safeparser.get('DEFAULT', 'mysql_password', fallback='password')
+ks_token = safeparser.get('DEFAULT', 'keystone_service_token', fallback='fkgjhsdflkjh')
 
-ganglia = safeparser.getboolean('install', 'ganglia', fallback=False)
+ganglia = safeparser.getboolean('DEFAULT', 'ganglia', fallback=False)
 
-debug = safeparser.getboolean('install', 'debug', fallback=False)
-horizon = safeparser.getboolean('install', 'enable horizon', fallback=False)
-ceilometer = safeparser.getboolean('install', 'ceilometer', fallback=False)
-heat = safeparser.getboolean('install', 'enable heat', fallback=True)
-cinder = safeparser.getboolean('install', 'enable cinder', fallback=False)
-cinder_file = safeparser.getboolean('install', 'cinder file', fallback=True)
-cinder_size = safeparser.get('install', 'cinder size', fallback=False)
-cinder_loc = safeparser.get('install', 'cinder location', fallback='/var/lib/cinder/cinder-volumes.lvm')
-neutron_switch = safeparser.get('install', 'neutron switch', fallback='linuxbridge')
-desktop = safeparser.getboolean('install', 'desktop', fallback=False)
+debug = safeparser.getboolean('DEFAULT', 'debug', fallback=False)
+horizon = safeparser.getboolean('DEFAULT', 'enable_horizon', fallback=False)
+ceilometer = safeparser.getboolean('DEFAULT', 'ceilometer', fallback=False)
+heat = safeparser.getboolean('DEFAULT', 'enable_heat', fallback=True)
+cinder = safeparser.getboolean('DEFAULT', 'enable_cinder', fallback=False)
+cinder_file = safeparser.getboolean('DEFAULT', 'cinder_file', fallback=True)
+cinder_size = safeparser.get('DEFAULT', 'cinder_size', fallback=False)
+cinder_loc = safeparser.get('DEFAULT', 'cinder_location', fallback='/var/lib/cinder/cinder-volumes.lvm')
+neutron_switch = safeparser.get('DEFAULT', 'neutron_switch', fallback='linuxbridge')
+desktop = safeparser.getboolean('DEFAULT', 'desktop', fallback=False)
 
 #Packaging section
-cariden = safeparser.getboolean('packaging', 'cariden', fallback=False)
-NNI = safeparser.getboolean('packaging', 'NNI', fallback=False)
-GITBRANCH = safeparser.get('packaging', 'GIT branch', fallback='grizzly')
-NOVABRANCH = safeparser.get('packaging', 'Nova branch', fallback='grizzly-virl-telnet')
-BASEDIR = safeparser.get('packaging', 'virl.standalone is in what directory', fallback='/home/virl/virl.standalone/')
-GITBASE = safeparser.get('packaging', 'base of the git tree is in what directory',
+cariden = safeparser.getboolean('DEFAULT', 'cariden', fallback=False)
+NNI = safeparser.getboolean('DEFAULT', 'NNI', fallback=False)
+GITBRANCH = safeparser.get('DEFAULT', 'GIT_branch', fallback='grizzly')
+NOVABRANCH = safeparser.get('DEFAULT', 'Nova_branch', fallback='grizzly-virl-telnet')
+BASEDIR = safeparser.get('DEFAULT', 'virl.standalone_is_in_what_directory', fallback='/home/virl/virl.standalone/')
+GITBASE = safeparser.get('DEFAULT', 'base_of_the_git_tree_is_in_what_directory',
                          fallback='/home/virl/virl.standalone/glocal')
-multiuser = safeparser.getboolean('packagingl', 'multiuser', fallback=True)
-install1q = safeparser.getboolean('packaging', 'Install 1q', fallback=True)
-packer_calls = safeparser.getboolean('packaging', 'packer?', fallback=False)
-vagrant_calls = safeparser.getboolean('packaging', 'vagrant?', fallback=False)
-vagrant_pre_fourth = safeparser.getboolean('packaging', 'vagrant before fourth?', fallback=False)
-vagrant_keys = safeparser.getboolean('packaging', 'vagrant keys?', fallback=False)
-cml = safeparser.getboolean('packaging', 'cml?', fallback=False)
+multiuser = safeparser.getboolean('DEFAULTl', 'multiuser', fallback=True)
+install1q = safeparser.getboolean('DEFAULT', 'Install_1q', fallback=True)
+packer_calls = safeparser.getboolean('DEFAULT', 'packer', fallback=False)
+vagrant_calls = safeparser.getboolean('DEFAULT', 'vagrant', fallback=False)
+vagrant_pre_fourth = safeparser.getboolean('DEFAULT', 'vagrant_before_fourth', fallback=False)
+vagrant_keys = safeparser.getboolean('DEFAULT', 'vagrant_keys', fallback=False)
+cml = safeparser.getboolean('DEFAULT', 'cml', fallback=False)
 
 
 #Operational Section
-image_set = safeparser.get('operational', 'image set', fallback='internal')
-salt = safeparser.getboolean('operational', 'salt?', fallback=True)
-salt_master = safeparser.get('operational', 'salt master', fallback='none')
-salt_id = safeparser.get('operational', 'salt id', fallback='virl')
-salt_domain = safeparser.get('operational', 'salt domain', fallback='virl.info')
-virl_type = safeparser.get('operational', 'Is this a stable or testing server', fallback='stable')
-cisco_internal = safeparser.getboolean('operational', 'inside cisco?', fallback=False)
-onedev = safeparser.getboolean('operational', 'onedev', fallback=False)
+image_set = safeparser.get('DEFAULT', 'image_set', fallback='internal')
+salt = safeparser.getboolean('DEFAULT', 'salt', fallback=True)
+salt_master = safeparser.get('DEFAULT', 'salt_master', fallback='none')
+salt_id = safeparser.get('DEFAULT', 'salt_id', fallback='virl')
+salt_domain = safeparser.get('DEFAULT', 'salt_domain', fallback='virl.info')
+virl_type = safeparser.get('DEFAULT', 'Is_this_a_stable_or_testing_server', fallback='stable')
+cisco_internal = safeparser.getboolean('DEFAULT', 'inside_cisco', fallback=False)
+onedev = safeparser.getboolean('DEFAULT', 'onedev', fallback=False)
 
 
 #Testing Section
-icehouse = safeparser.getboolean('testing', 'icehouse?', fallback=True)
-testingank = safeparser.getboolean('testing', 'testing ank', fallback=False)
-testingstd = safeparser.getboolean('testing', 'testing std', fallback=False)
-#ankstable = safeparser.getboolean('testing', 'stable ank', fallback=False)
-v144 = safeparser.getboolean('testing', 'v144', fallback=True)
+icehouse = safeparser.getboolean('DEFAULT', 'icehouse', fallback=True)
+testingank = safeparser.getboolean('DEFAULT', 'testing_ank', fallback=False)
+testingstd = safeparser.getboolean('DEFAULT', 'testing_std', fallback=False)
+#ankstable = safeparser.getboolean('DEFAULT', 'stable ank', fallback=False)
+v144 = safeparser.getboolean('DEFAULT', 'v144', fallback=True)
 
 #devops section
-testingdevops = safeparser.getboolean('testing', 'testing devops', fallback=False)
+testingdevops = safeparser.getboolean('DEFAULT', 'testing_devops', fallback=False)
 
 #cluster section
-controller = safeparser.getboolean('cluster', 'this node is the controller', fallback=True)
-internalnet_controller_ip = safeparser.get('changeable', 'internalnet controller IP', fallback='172.16.10.250')
-internalnet_controller_hostname = safeparser.get('changeable', 'internalnet controller hostname', fallback='controller')
-internalnet_port = safeparser.get('changeable', 'internalnet_port', fallback='eth4')
-internalnet_ip = safeparser.get('changeable', 'internalnet IP', fallback='172.16.10.250')
-internalnet_network = safeparser.get('changeable', 'internalnet_network', fallback='172.16.10.0')
-internalnet_netmask = safeparser.get('changeable', 'internalnet_netmask', fallback='255.255.255.0')
-internalnet_gateway = safeparser.get('changeable', 'internalnet_gateway', fallback='172.16.10.1')
+controller = safeparser.getboolean('DEFAULT', 'this node is the controller', fallback=True)
+internalnet_controller_ip = safeparser.get('DEFAULT', 'internalnet_controller_IP', fallback='172.16.10.250')
+internalnet_controller_hostname = safeparser.get('DEFAULT', 'internalnet_controller_hostname', fallback='controller')
+internalnet_port = safeparser.get('DEFAULT', 'internalnet_port', fallback='eth4')
+internalnet_ip = safeparser.get('DEFAULT', 'internalnet_IP', fallback='172.16.10.250')
+internalnet_network = safeparser.get('DEFAULT', 'internalnet_network', fallback='172.16.10.0')
+internalnet_netmask = safeparser.get('DEFAULT', 'internalnet_netmask', fallback='255.255.255.0')
+internalnet_gateway = safeparser.get('DEFAULT', 'internalnet_gateway', fallback='172.16.10.1')
 
 
 
@@ -275,7 +278,8 @@ def alter_virlcfg():
 
 
 def building_salt_extra():
-    #
+    if not path.exists('/etc/salt/virl'):
+        subprocess.call(['sudo', 'mkdir', '-p', '/etc/salt/virl'])
     if path.exists('/usr/local/bin/keystone') or path.exists('/usr/bin/keystone'):
         admin_tenid = (subprocess.check_output(['keystone --os-tenant-name admin --os-username admin'
                                             ' --os-password {ospassword} --os-auth-url=http://localhost:5000/v2.0'
@@ -295,6 +299,8 @@ def building_salt_extra():
             extra.write("""file_client: local\n""")
         extra.write("""id: {salt_id}\n""".format(salt_id=salt_id))
         extra.write("""append_domain: {salt_domain}\n""".format(salt_domain=salt_domain))
+        extra.write("""grains_dirs:\n""")
+        extra.write("""  - /etc/salt/virl\n""")
 
     with open(("/tmp/grains"), "w") as grains:
         for section_name in safeparser.sections():
@@ -313,7 +319,7 @@ mysql.pass: {mypass}\n""".format(ospassword=ospassword, kstoken=ks_token, tenid=
     subprocess.call(['sudo', 'cp', '-f', ('/tmp/extra'), '/etc/salt/minion.d/extra.conf'])
     subprocess.call(['sudo', 'cp', '-f', ('/tmp/openstack'),
                              '/etc/salt/minion.d/openstack.conf'])
-    subprocess.call(['sudo', 'cp', '-f', ('/tmp/grains'), '/etc/salt'])
+    subprocess.call(['sudo', 'cp', '-f', ('/tmp/grains'), '/etc/salt/virl'])
     subprocess.call(['sudo', 'service', 'salt-minion', 'restart'])
 
 
@@ -1120,7 +1126,7 @@ if __name__ == "__main__":
             copy((BASEDIR + 'orig/authorized_keys'), ('/home/virl/.ssh/authorized_keys'))
         if cml:
             subprocess.call(['cp', '-f', (BASEDIR + 'cml.settings.ini'), '/home/virl/settings.ini'])
-            #subprocess.call(['sed', '-i', 's/cml? = False/cml? = True/g', '/home/virl/settings.ini'])
+            #subprocess.call(['sed', '-i', 's/cml = False/cml = True/g', '/home/virl/settings.ini'])
         else:
             subprocess.call(['cp', '-f', (BASEDIR + 'vsettings.ini'), '/home/virl/settings.ini'])
 

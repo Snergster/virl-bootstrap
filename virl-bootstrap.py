@@ -74,21 +74,21 @@ while not while_exit:
     if choice == 10:
         if not path.exists('/home/virl/settings.ini'):
             subprocess.call(['cp', '/home/virl/vsettings.ini', '/home/virl/settings.ini'])
-        subprocess.call(['crudini', '--set','/home/virl/settings.ini', 'operational',
+        subprocess.call(['crudini', '--set','/home/virl/settings.ini', 'DEFAULT',
                          'salt master', salt_master])
-        subprocess.call(['crudini', '--set','/home/virl/settings.ini', 'operational',
+        subprocess.call(['crudini', '--set','/home/virl/settings.ini', 'DEFAULT',
                          'salt id', salt_name])
-        subprocess.call(['crudini', '--set','/home/virl/settings.ini', 'operational',
+        subprocess.call(['crudini', '--set','/home/virl/settings.ini', 'DEFAULT',
                          'salt domain', salt_append_domain])
         if not proxy == 'None':
-            subprocess.call(['crudini', '--set','/home/virl/settings.ini', 'changeable',
+            subprocess.call(['crudini', '--set','/home/virl/settings.ini', 'DEFAULT',
                          'proxy', 'True'])
-            subprocess.call(['crudini', '--set','/home/virl/settings.ini', 'changeable',
+            subprocess.call(['crudini', '--set','/home/virl/settings.ini', 'DEFAULT',
                          'http proxy', proxy])
         if not hostname == 'virl' or not domain == 'virl.info':
-            subprocess.call(['crudini', '--set','/home/virl/settings.ini', 'changeable',
+            subprocess.call(['crudini', '--set','/home/virl/settings.ini', 'DEFAULT',
                          'hostname', hostname ])
-            subprocess.call(['crudini', '--set','/home/virl/settings.ini', 'changeable',
+            subprocess.call(['crudini', '--set','/home/virl/settings.ini', 'DEFAULT',
                          'domain', domain])
         subprocess.call(['/usr/bin/nano', '/home/virl/settings.ini'])
 
