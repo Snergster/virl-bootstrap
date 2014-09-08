@@ -72,25 +72,25 @@ while not while_exit:
     if choice == 9:
         subprocess.call(['salt-call', 'state.sls', 'zero'])
     if choice == 10:
-        if not path.exists('/home/virl/settings.ini'):
-            subprocess.call(['cp', '/home/virl/vsettings.ini', '/home/virl/settings.ini'])
-        subprocess.call(['crudini', '--set','/home/virl/settings.ini', 'DEFAULT',
+        if not path.exists('/etc/virl.ini'):
+            subprocess.call(['cp', '/home/virl/vsettings.ini', '/etc/virl.ini'])
+        subprocess.call(['crudini', '--set','/etc/virl.ini', 'DEFAULT',
                          'salt_master', salt_master])
-        subprocess.call(['crudini', '--set','/home/virl/settings.ini', 'DEFAULT',
+        subprocess.call(['crudini', '--set','/etc/virl.ini', 'DEFAULT',
                          'salt_id', salt_name])
-        subprocess.call(['crudini', '--set','/home/virl/settings.ini', 'DEFAULT',
+        subprocess.call(['crudini', '--set','/etc/virl.ini', 'DEFAULT',
                          'salt_domain', salt_append_domain])
         if not proxy == 'None':
-            subprocess.call(['crudini', '--set','/home/virl/settings.ini', 'DEFAULT',
+            subprocess.call(['crudini', '--set','/etc/virl.ini', 'DEFAULT',
                          'proxy', 'True'])
-            subprocess.call(['crudini', '--set','/home/virl/settings.ini', 'DEFAULT',
+            subprocess.call(['crudini', '--set','/etc/virl.ini', 'DEFAULT',
                          'http_proxy', proxy])
         if not hostname == 'virl' or not domain == 'virl.info':
-            subprocess.call(['crudini', '--set','/home/virl/settings.ini', 'DEFAULT',
+            subprocess.call(['crudini', '--set','/etc/virl.ini', 'DEFAULT',
                          'hostname', hostname ])
-            subprocess.call(['crudini', '--set','/home/virl/settings.ini', 'DEFAULT',
+            subprocess.call(['crudini', '--set','/etc/virl.ini', 'DEFAULT',
                          'domain', domain])
-        subprocess.call(['/usr/bin/nano', '/home/virl/settings.ini'])
+        subprocess.call(['/usr/bin/nano', '/etc/virl.ini'])
 
     if choice == 11:
         subprocess.call(['/usr/local/bin/vinstall', 'salt'])
