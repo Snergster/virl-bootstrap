@@ -44,12 +44,17 @@ while not while_exit:
         hostname = raw_input('System hostname [%s] ' % hostname)
         domain = raw_input('System Domain name [%s] ' % domain)
     if choice == 4:
+        if not path.exists('/etc/salt/virl'):
+            subprocess.check_output(['mkdir', '-p', '/etc/salt/virl'])
         if not path.exists('/etc/salt/minion.d'):
             subprocess.check_output(['mkdir', '-p', '/etc/salt/minion.d'])
         with open(("/etc/salt/minion.d/extra.conf"), "w") as extra:
             extra.write("""master: {salt_master}\n""".format(salt_master=salt_master))
             extra.write("""id: {salt_name}\n""".format(salt_name=salt_name))
             extra.write("""append_domain: {salt_append_domain}\n""".format(salt_append_domain=salt_append_domain))
+            extra.write("""grains_dirs:\n""")
+            extra.write("""  - /etc/salt/virl\n""")
+
     if choice == 5:
         proxy = raw_input('Http proxy [%s] ' % proxy)
         if not proxy == 'None':
