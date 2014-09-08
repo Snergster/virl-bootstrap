@@ -79,9 +79,9 @@ Step 9 - Install virl installer and settings
 
 - Ensure that the step completed and reports no 'Failed' values
 
-Step 10 - Edit settings.ini
+Step 10 - Edit /etc/virl.ini
 
-- Modify the content of the settings.ini to meet you needs. The hostname and domain name values will already contain the values you entered in Step 3. HTTP proxy will contain the values entered in Step 5. Main areas to check are as follows:
+- Modify the content of the /etc/virl.ini to meet you needs. The hostname and domain name values will already contain the values you entered in Step 3. HTTP proxy will contain the values entered in Step 5. Main areas to check are as follows:
 
 -- using dhcp on the public port?
 -- Static IP, public_network, public_netmask, public_gateway
@@ -98,7 +98,7 @@ Step 10 - Edit settings.ini
 
 NOTE - ensure that you have reachability to your ntp server. If you are using DHCP, you do not need to alter the 'first nameserver' and 'second nameserver' fields. If you are using static IP addressing, ensure that you have reachability to your nameservers.
 
-- Save your settings.ini changes (CTRL^O) and exit (CTRL^X)
+- Save your virl.ini changes (CTRL^O) and exit (CTRL^X)
 
 NOTE - if you abort the menu sequence and restart, you MUST re-enter the information into the menu fields (Steps 1 to 5) once more.
 
@@ -108,7 +108,7 @@ Step 11 - Exit
 
 NOTE - if you abort the menu sequence and restart, you MUST re-enter the information into the menu fields (Steps 1 to 5) once more.
 
-Verify that the IP addresses in /etc/network/interfaces match those outlined in settings.ini
+Verify that the IP addresses in /etc/network/interfaces match those outlined in /etc/virl.ini
 
 sudo reboot
 
@@ -118,7 +118,7 @@ vinstall all
 
 The following command will download the VM images and register them. This can be lengthy
 
-sudo salt-call state.sls router-vms
+sudo salt-call state.sls routervms
 
 Complete the installation by rebooting the system.
 
