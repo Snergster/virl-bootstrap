@@ -43,10 +43,10 @@ log.addHandler(conhand)
 
 
 safeparser = configparser.ConfigParser()
-safeparser_file = '/etc/settings.ini'
+safeparser_file = '/etc/virl.ini'
 safeparser_backup_file = '/home/virl/vsettings.ini'
 if path.exists(safeparser_file):
-    safeparser.read('/etc/settings.ini')
+    safeparser.read('/etc/virl.ini')
 elif path.exists(safeparser_backup_file):
     safeparser.read('/home/virl/vsettings.ini')
 else:
@@ -303,9 +303,9 @@ def building_salt_extra():
         extra.write("""  - /etc/salt/virl\n""")
 
     with open(("/tmp/grains"), "w") as grains:
-        for section_name in safeparser.sections():
-            for name, value in safeparser.items(section_name):
-                grains.write("""  {name}: {value}\n""".format(name=name, value=value))
+        # for section_name in safeparser.sections():
+        for name, value in safeparser.items('DEFAULT'):
+            grains.write("""  {name}: {value}\n""".format(name=name, value=value))
         grains.write("""  neutron_extnet_id: {neutid}\n""".format(neutid=neutron_extnet_id))
     with open(("/tmp/openstack"), "w") as openstack:
         openstack.write("""keystone.user: admin
@@ -319,7 +319,7 @@ mysql.pass: {mypass}\n""".format(ospassword=ospassword, kstoken=ks_token, tenid=
     subprocess.call(['sudo', 'cp', '-f', ('/tmp/extra'), '/etc/salt/minion.d/extra.conf'])
     subprocess.call(['sudo', 'cp', '-f', ('/tmp/openstack'),
                              '/etc/salt/minion.d/openstack.conf'])
-    subprocess.call(['sudo', 'cp', '-f', ('/tmp/grains'), '/etc/salt/virl'])
+    subprocess.call(['sudo', 'cp', '-f', ('/tmp/grains'), '/etc/salt'])
     subprocess.call(['sudo', 'service', 'salt-minion', 'restart'])
 
 
@@ -1100,7 +1100,6 @@ if __name__ == "__main__":
             # subprocess.call(['sudo', '-s', (BASEDIR + 'install_scripts/vsetup_ramdisk')])
             call_salt('nova-install')
         User_Creator(user_list, user_list_limited)
-        call_salt('images')
         if guest_account:
             Net_Creator('guest','guest')
         else:
