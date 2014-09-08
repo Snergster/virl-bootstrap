@@ -118,7 +118,7 @@ vinstall all
 
 The following command will download the VM images and register them. This can be lengthy
 
-sudo salt-call state.sls router-vms
+sudo salt-call state.sls routervms
 
 Complete the installation by rebooting the system.
 
