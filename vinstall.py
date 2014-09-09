@@ -679,17 +679,17 @@ def desktop_icons():
                 makedirs('/home/virl/.config/autostart')
             subprocess.call(['sudo', 'chown', '-R', 'virl:virl', '/home/virl/.config'])
 
-            with open("/home/virl/.config/autostart/kvmchecker.desktop", "w") as kvmchecker:
-                kvmchecker.write("""[Desktop Entry]
-Name=kvmchecker
-Comment=verify vt-x support
-Exec=/usr/local/bin/kvmchecker
-Hidden=false
-NoDisplay=false
-X-GNOME-Autostart-enabled=true
-Type=Application
-""")
-            subprocess.call(['sudo', 'chmod', 'a+x', '/home/virl/.config/autostart/kvmchecker.desktop'])
+#             with open("/home/virl/.config/autostart/kvmchecker.desktop", "w") as kvmchecker:
+#                 kvmchecker.write("""[Desktop Entry]
+# Name=kvmchecker
+# Comment=verify vt-x support
+# Exec=/usr/local/bin/kvmchecker
+# Hidden=false
+# NoDisplay=false
+# X-GNOME-Autostart-enabled=true
+# Type=Application
+# """)
+#             subprocess.call(['sudo', 'chmod', 'a+x', '/home/virl/.config/autostart/kvmchecker.desktop'])
 
 #             with open("/home/virl/.config/autostart/wallpaper.desktop", "w") as wallpaper:
 #                 wallpaper.write("""[Desktop Entry]
@@ -706,127 +706,127 @@ Type=Application
             desktop = '/home/virl/Desktop'
             if not path.exists(desktop):
                 mkdir('/home/virl/Desktop')
-            with open("/home/virl/Desktop/Xterm.desktop", "w") as xconf:
-                xconf.write("""[Desktop Entry]
-Version=1.0
-Name=xterm
-Comment=xterm for folks
-Exec=/usr/bin/xterm
-Icon=/usr/share/icons/Humanity/apps/48/utilities-terminal.svg
-Terminal=false
-Type=Application
-Categories=Utility;Application;
-""")
-            subprocess.call(['sudo', 'chmod', 'a+x', '/home/virl/Desktop/Xterm.desktop'])
-            if not cml:
-                with open("/home/virl/Desktop/VMMaestro.desktop", "w") as cmlconf:
-                    cmlconf.write("""[Desktop Entry]
-Version=1.0
-Name=VMMaestro
-Comment=VMMaestro for folks
-Exec=/home/virl/VMMaestro-linux/VMMaestro
-Icon=/home/virl/VMMaestro-linux/icon.xpm
-Terminal=false
-Type=Application
-Categories=Utility;Application;
-""")
-                subprocess.call(['sudo', 'chmod', 'a+x', '/home/virl/Desktop/VMMaestro.desktop'])
-            with open("/home/virl/Desktop/VIRL-rehost.desktop", "w") as vinstallconf:
-                vinstallconf.write("""[Desktop Entry]
-Version=1.0
-Name=1. Install networking
-Comment=To finish install
-Exec=/usr/local/bin/vinstall rehost
-Icon=/usr/share/icons/gnome/48x48/status/network-wired-disconnected.png
-Terminal=true
-Type=Application
-Categories=Utility;Application;
-""")
-            subprocess.call(['sudo', 'chmod', 'a+x', '/home/virl/Desktop/VIRL-rehost.desktop'])
-            with open("/home/virl/Desktop/VIRL-renumber.desktop", "w") as vchangesconf:
-                vchangesconf.write("""[Desktop Entry]
-Version=1.0
-Name=3. Install changes
-Comment=Only after setting.ini changes
-Exec=/usr/local/bin/vinstall renumber
-Icon=/usr/share/icons/Humanity/apps/48/gconf-editor.svg
-Terminal=true
-Type=Application
-Categories=Utility;Application;
-""")
-            subprocess.call(['sudo', 'chmod', 'a+x', '/home/virl/Desktop/VIRL-renumber.desktop'])
-            with open("/home/virl/Desktop/Logout.desktop", "w") as vlogoutconf:
-                vlogoutconf.write("""[Desktop Entry]
-Version=1.0
-Name=LOGOUT
-Comment=To finish install
-Exec=/usr/bin/lubuntu-logout
-Icon=/usr/share/icons/gnome/48x48/status/computer-fail.png
-Terminal=false
-Type=Application
-Categories=Utility;Application;
-""")
-            subprocess.call(['sudo', 'chmod', 'a+x', '/home/virl/Desktop/Logout.desktop'])
-            with open("/home/virl/Desktop/Reboot2.desktop", "w") as vrebootconf:
-                vrebootconf.write("""[Desktop Entry]
-Version=1.0
-Name=2. REBOOT
-Comment=To reboot
-Exec=sudo /sbin/reboot
-Icon=/usr/share/icons/gnome/48x48/status/computer-fail.png
-Terminal=false
-Type=Application
-Categories=Utility;Application;
-""")
-            subprocess.call(['sudo', 'chmod', 'a+x', '/home/virl/Desktop/Reboot2.desktop'])
-            with open("/home/virl/Desktop/Reboot.desktop", "w") as vrebootconf:
-                vrebootconf.write("""[Desktop Entry]
-Version=1.0
-Name=4. REBOOT
-Comment=To reboot
-Exec=sudo /sbin/reboot
-Icon=/usr/share/icons/gnome/48x48/status/computer-fail.png
-Terminal=false
-Type=Application
-Categories=Utility;Application;
-""")
-            subprocess.call(['sudo', 'chmod', 'a+x', '/home/virl/Desktop/Reboot.desktop'])
-            with open("/home/virl/Desktop/IP-ADDRESS.desktop", "w") as ipaconf:
-                ipaconf.write("""[Desktop Entry]
-Version=1.0
-Name=ip-address
-Comment=To see ip address
-Exec=xterm -e "/sbin/ifconfig eth0 | grep inet ;bash"
-Icon=/usr/share/icons/Humanity/apps/logviewer.svg
-Terminal=false
-Type=Application
-Categories=Utility;Application;
-""")
-            subprocess.call(['sudo', 'chmod', 'a+x', '/home/virl/Desktop/IP-ADDRESS.desktop'])
-            with open("/home/virl/Desktop/README.desktop", "w") as readmeconf:
-                readmeconf.write("""[Desktop Entry]
-Version=1.0
-Name=README
-Comment=Readme for install
-Exec=gedit /home/virl/.README
-Icon=/usr/share/icons/Humanity/apps/48/accessories-dictionary.svg
-Terminal=false
-Type=Application
-Categories=Utility;Application;
-""")
-            subprocess.call(['sudo', 'chmod', 'a+x', '/home/virl/Desktop/README.desktop'])
-            with open("/home/virl/Desktop/Edit-settings.desktop", "w") as settingsconf:
-                settingsconf.write("""[Desktop Entry]
-Version=1.0
-Name=0. Edit settings.ini
-Comment=To edit settings.ini file
-Exec=gedit /home/virl/settings.ini
-Icon=/usr/share/icons/Humanity/apps/48/gedit-icon.svg
-Terminal=false
-Type=Application
-Categories=Utility;Application;
-""")
-            subprocess.call(['sudo', 'chmod', 'a+x', '/home/virl/Desktop/Edit-settings.desktop'])
+#             with open("/home/virl/Desktop/Xterm.desktop", "w") as xconf:
+#                 xconf.write("""[Desktop Entry]
+# Version=1.0
+# Name=xterm
+# Comment=xterm for folks
+# Exec=/usr/bin/xterm
+# Icon=/usr/share/icons/Humanity/apps/48/utilities-terminal.svg
+# Terminal=false
+# Type=Application
+# Categories=Utility;Application;
+# """)
+#             subprocess.call(['sudo', 'chmod', 'a+x', '/home/virl/Desktop/Xterm.desktop'])
+#             if not cml:
+#                 with open("/home/virl/Desktop/VMMaestro.desktop", "w") as cmlconf:
+#                     cmlconf.write("""[Desktop Entry]
+# Version=1.0
+# Name=VMMaestro
+# Comment=VMMaestro for folks
+# Exec=/home/virl/VMMaestro-linux/VMMaestro
+# Icon=/home/virl/VMMaestro-linux/icon.xpm
+# Terminal=false
+# Type=Application
+# Categories=Utility;Application;
+# """)
+#                 subprocess.call(['sudo', 'chmod', 'a+x', '/home/virl/Desktop/VMMaestro.desktop'])
+#             with open("/home/virl/Desktop/VIRL-rehost.desktop", "w") as vinstallconf:
+#                 vinstallconf.write("""[Desktop Entry]
+# Version=1.0
+# Name=1. Install networking
+# Comment=To finish install
+# Exec=/usr/local/bin/vinstall rehost
+# Icon=/usr/share/icons/gnome/48x48/status/network-wired-disconnected.png
+# Terminal=true
+# Type=Application
+# Categories=Utility;Application;
+# """)
+#             subprocess.call(['sudo', 'chmod', 'a+x', '/home/virl/Desktop/VIRL-rehost.desktop'])
+#             with open("/home/virl/Desktop/VIRL-renumber.desktop", "w") as vchangesconf:
+#                 vchangesconf.write("""[Desktop Entry]
+# Version=1.0
+# Name=3. Install changes
+# Comment=Only after setting.ini changes
+# Exec=/usr/local/bin/vinstall renumber
+# Icon=/usr/share/icons/Humanity/apps/48/gconf-editor.svg
+# Terminal=true
+# Type=Application
+# Categories=Utility;Application;
+# """)
+#             subprocess.call(['sudo', 'chmod', 'a+x', '/home/virl/Desktop/VIRL-renumber.desktop'])
+#             with open("/home/virl/Desktop/Logout.desktop", "w") as vlogoutconf:
+#                 vlogoutconf.write("""[Desktop Entry]
+# Version=1.0
+# Name=LOGOUT
+# Comment=To finish install
+# Exec=/usr/bin/lubuntu-logout
+# Icon=/usr/share/icons/gnome/48x48/status/computer-fail.png
+# Terminal=false
+# Type=Application
+# Categories=Utility;Application;
+# """)
+#             subprocess.call(['sudo', 'chmod', 'a+x', '/home/virl/Desktop/Logout.desktop'])
+#             with open("/home/virl/Desktop/Reboot2.desktop", "w") as vrebootconf:
+#                 vrebootconf.write("""[Desktop Entry]
+# Version=1.0
+# Name=2. REBOOT
+# Comment=To reboot
+# Exec=sudo /sbin/reboot
+# Icon=/usr/share/icons/gnome/48x48/status/computer-fail.png
+# Terminal=false
+# Type=Application
+# Categories=Utility;Application;
+# """)
+#             subprocess.call(['sudo', 'chmod', 'a+x', '/home/virl/Desktop/Reboot2.desktop'])
+#             with open("/home/virl/Desktop/Reboot.desktop", "w") as vrebootconf:
+#                 vrebootconf.write("""[Desktop Entry]
+# Version=1.0
+# Name=4. REBOOT
+# Comment=To reboot
+# Exec=sudo /sbin/reboot
+# Icon=/usr/share/icons/gnome/48x48/status/computer-fail.png
+# Terminal=false
+# Type=Application
+# Categories=Utility;Application;
+# """)
+#             subprocess.call(['sudo', 'chmod', 'a+x', '/home/virl/Desktop/Reboot.desktop'])
+#             with open("/home/virl/Desktop/IP-ADDRESS.desktop", "w") as ipaconf:
+#                 ipaconf.write("""[Desktop Entry]
+# Version=1.0
+# Name=ip-address
+# Comment=To see ip address
+# Exec=xterm -e "/sbin/ifconfig eth0 | grep inet ;bash"
+# Icon=/usr/share/icons/Humanity/apps/logviewer.svg
+# Terminal=false
+# Type=Application
+# Categories=Utility;Application;
+# """)
+#             subprocess.call(['sudo', 'chmod', 'a+x', '/home/virl/Desktop/IP-ADDRESS.desktop'])
+#             with open("/home/virl/Desktop/README.desktop", "w") as readmeconf:
+#                 readmeconf.write("""[Desktop Entry]
+# Version=1.0
+# Name=README
+# Comment=Readme for install
+# Exec=gedit /home/virl/.README
+# Icon=/usr/share/icons/Humanity/apps/48/accessories-dictionary.svg
+# Terminal=false
+# Type=Application
+# Categories=Utility;Application;
+# """)
+#             subprocess.call(['sudo', 'chmod', 'a+x', '/home/virl/Desktop/README.desktop'])
+#             with open("/home/virl/Desktop/Edit-settings.desktop", "w") as settingsconf:
+#                 settingsconf.write("""[Desktop Entry]
+# Version=1.0
+# Name=0. Edit virl.ini
+# Comment=To edit virl.ini file
+# Exec=sudo gedit /etc/virl.ini
+# Icon=/usr/share/icons/Humanity/apps/48/gedit-icon.svg
+# Terminal=false
+# Type=Application
+# Categories=Utility;Application;
+# """)
+#             subprocess.call(['sudo', 'chmod', 'a+x', '/home/virl/Desktop/Edit-settings.desktop'])
 #             if not cml:
 #                 with open("/home/virl/Desktop/Videos.desktop", "w") as videosconf:
 #                     videosconf.write("""[Desktop Entry]
@@ -1026,7 +1026,7 @@ if __name__ == "__main__":
             #                  _xterm ])
             # subprocess.call(['sudo', 'crudini', '--set','/etc/lightdm/lightdm.conf.d/20-lubuntu.conf',
             #          'SeatDefaults', 'allow-guest', ' False'])
-            desktop_icons()
+            # desktop_icons()
 
             sleep(5)
         if onedev:
@@ -1053,7 +1053,7 @@ if __name__ == "__main__":
         #fix_ntp()
         pass
     if varg['images']:
-        call_salt('images')
+        call_salt('routervms')
     if varg['renumber']:
         '''renumber fixes initial os nets and services list only'''
         qcall = ['neutron', '--os-tenant-name', 'admin', '--os-username', 'admin', '--os-password',
