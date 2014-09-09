@@ -43,7 +43,7 @@ Step 1 - Change salt master from salt-master.cisco.com
 
 Step 2 - Change salt id from virl or salt domain from virl.info
 
-- You may have received instructions to use a specific 'salt id' and 'salt domain', if so, enter the provided values here. If you enter this step, you MUST enter a value. The fields must NOT be blank!
+- You may have received instructions to use a specific 'salt id' and 'salt domain', if so, enter the provided values here. If you enter this step, you MUST enter a value. The fields must NOT be blank! Typically the 'salt id' == hostname, 'salt domain' == domain name that you're going to set in the next step.
 
 Step 3 - Change hostname or domain name
 
