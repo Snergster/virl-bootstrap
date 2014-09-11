@@ -58,7 +58,7 @@ while not while_exit:
 
     if choice == 5:
         proxy = raw_input('Http proxy [%s] ' % proxy)
-        if not proxy == 'None':
+        if not proxy == 'None' or not '':
             if not path.exists('/etc/salt'):
                 subprocess.check_output(['mkdir', '-p', '/etc/salt'])
             with open(("/etc/salt/grains"), "w") as grains:
@@ -81,7 +81,7 @@ while not while_exit:
                          'salt_id', salt_name])
         subprocess.call(['crudini', '--set','/etc/virl.ini', 'DEFAULT',
                          'salt_domain', salt_append_domain])
-        if not proxy == 'None':
+        if not proxy == 'None' or not '':
             subprocess.call(['crudini', '--set','/etc/virl.ini', 'DEFAULT',
                          'proxy', 'True'])
             subprocess.call(['crudini', '--set','/etc/virl.ini', 'DEFAULT',
