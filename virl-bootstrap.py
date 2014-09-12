@@ -101,7 +101,8 @@ while not while_exit:
         subprocess.call(['/usr/bin/nano', '/etc/virl.ini'])
 
     if choice == 11:
-        subprocess.call(['rm', '/etc/salt/grains'])
+        if path.isfile('/etc/salt/grains'):
+            subprocess.call(['rm', '/etc/salt/grains'])
         subprocess.call(['/usr/local/bin/vinstall', 'salt'])
         sleep(5)
         subprocess.call(['/usr/local/bin/vinstall', 'first'])
