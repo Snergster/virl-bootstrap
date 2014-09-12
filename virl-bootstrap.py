@@ -90,6 +90,9 @@ while not while_exit:
                          'proxy', 'True'])
             subprocess.call(['crudini', '--set','/etc/virl.ini', 'DEFAULT',
                          'http_proxy', proxy])
+        else:
+            subprocess.call(['crudini', '--set','/etc/virl.ini', 'DEFAULT',
+                         'proxy', 'False'])
         if not hostname == 'virl' or not domain == 'virl.info':
             subprocess.call(['crudini', '--set','/etc/virl.ini', 'DEFAULT',
                          'hostname', hostname ])
@@ -98,6 +101,7 @@ while not while_exit:
         subprocess.call(['/usr/bin/nano', '/etc/virl.ini'])
 
     if choice == 11:
+        subprocess.call(['rm', '/etc/salt/grains'])
         subprocess.call(['/usr/local/bin/vinstall', 'salt'])
         sleep(5)
         subprocess.call(['/usr/local/bin/vinstall', 'first'])
