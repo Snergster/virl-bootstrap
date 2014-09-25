@@ -78,7 +78,7 @@ while not while_exit:
         subprocess.call(['salt-call', 'state.sls', 'zero'])
     if choice == 10:
         if not path.exists('/etc/virl.ini'):
-            subprocess.call(['cp', '/home/virl/vsettings.ini', '/etc/virl.ini'])
+            subprocess.call(['cp', './vsettings.ini', '/etc/virl.ini'])
         subprocess.call(['crudini', '--set','/etc/virl.ini', 'DEFAULT',
                          'salt_master', salt_master])
         subprocess.call(['crudini', '--set','/etc/virl.ini', 'DEFAULT',
