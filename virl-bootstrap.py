@@ -52,6 +52,10 @@ while not while_exit:
             extra.write("""master: {salt_master}\n""".format(salt_master=salt_master))
             extra.write("""id: {salt_name}\n""".format(salt_name=salt_name))
             extra.write("""append_domain: {salt_append_domain}\n""".format(salt_append_domain=salt_append_domain))
+            extra.write("""master_type: failover \n""")
+            extra.write("""verify_master_pubkey_sign: True \n""")
+            extra.write("""master_shuffle: True \n""")
+            extra.write("""master_alive_interval: 180 \n""")
             ##TODO waiting for salt to put this back in
             # extra.write("""grains_dirs:\n""")
             # extra.write("""  - /etc/salt/virl\n""")
@@ -69,8 +73,12 @@ while not while_exit:
                 grains.write("""proxy: False\n""")
 
     if choice == 6:
+        subprocess.call(['mkdir', '-p','/etc/salt/pki/minion'])
+        subprocess.call(['cp', './master_sign.pub /etc/salt/pki/minion', '-k'])
         subprocess.call(['sh', '/home/virl/virl-bootstrap/install_salt.sh'])
     if choice == 7:
+        subprocess.call(['mkdir', '-p','/etc/salt/pki/minion'])
+        subprocess.call(['cp', './master_sign.pub /etc/salt/pki/minion', '-k'])
         subprocess.call(['sh', '/home/virl/virl-bootstrap/install_salt.sh', '-k', (cwd + '/preseed_keys')])
     if choice == 8:
         subprocess.call(['salt-call', 'test.ping'])
@@ -107,4 +115,3 @@ while not while_exit:
         sleep(5)
         subprocess.call(['/usr/local/bin/vinstall', 'first'])
         while_exit = 1
-
