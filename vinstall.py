@@ -5,7 +5,7 @@
 """virl install.
 
 Usage:
-  foo.py zero | first | second | third | fourth | salt | test | iso | wrap | desktop | rehost | renumber | compute | all | images
+  foo.py zero | first | second | third | fourth | salt | test | iso | wrap | desktop | rehost | renumber | compute | all | images | password
 
 Options:
   --version             shows program's version number and exit
@@ -44,13 +44,15 @@ log.addHandler(conhand)
 
 safeparser = configparser.ConfigParser()
 safeparser_file = '/etc/virl.ini'
-safeparser_backup_file = '/home/virl/vsettings.ini'
+# safeparser_backup_file = '/home/virl/vsettings.ini'
 if path.exists(safeparser_file):
     safeparser.read('/etc/virl.ini')
-elif path.exists(safeparser_backup_file):
-    safeparser.read('/home/virl/vsettings.ini')
+# elif path.exists(safeparser_backup_file):
+#     safeparser.read('/home/virl/vsettings.ini')
 else:
-    safeparser.read('./settings.ini')
+    print "No config exists at /etc/virl.ini.  Exiting"
+    exit(1)
+    # safeparser.read('./settings.ini')
 DEFAULT = safeparser['DEFAULT']
 # install = safeparser['install']
 # operational = safeparser['operational']
@@ -129,7 +131,9 @@ vnc = safeparser.getboolean('DEFAULT', 'vnc', fallback=False)
 vnc_passwd = safeparser.get('DEFAULT', 'vnc_password', fallback='letmein')
 
 #Install section
+uwm_username = safeparser.get('DEFAULT', 'uwm_username', fallback='uwmadmin')
 uwmadmin_passwd = safeparser.get('DEFAULT', 'uwmadmin_password', fallback='password')
+guest_passwd = safeparser.get('DEFAULT', 'guest_password', fallback='guest')
 ospassword = safeparser.get('DEFAULT', 'password', fallback='password')
 mypassword = safeparser.get('DEFAULT', 'mysql_password', fallback='password')
 ks_token = safeparser.get('DEFAULT', 'keystone_service_token', fallback='fkgjhsdflkjh')
@@ -142,7 +146,8 @@ ceilometer = safeparser.getboolean('DEFAULT', 'ceilometer', fallback=False)
 heat = safeparser.getboolean('DEFAULT', 'enable_heat', fallback=True)
 cinder = safeparser.getboolean('DEFAULT', 'enable_cinder', fallback=False)
 cinder_file = safeparser.getboolean('DEFAULT', 'cinder_file', fallback=True)
-cinder_size = safeparser.get('DEFAULT', 'cinder_size', fallback=False)
+cinder_device = safeparser.get('DEFAULT', 'cinder_device', fallback=False )
+cinder_size = safeparser.get('DEFAULT', 'cinder_size', fallback=2000 )
 cinder_loc = safeparser.get('DEFAULT', 'cinder_location', fallback='/var/lib/cinder/cinder-volumes.lvm')
 neutron_switch = safeparser.get('DEFAULT', 'neutron_switch', fallback='linuxbridge')
 desktop = safeparser.getboolean('DEFAULT', 'desktop', fallback=False)
@@ -174,11 +179,14 @@ virl_type = safeparser.get('DEFAULT', 'Is_this_a_stable_or_testing_server', fall
 cisco_internal = safeparser.getboolean('DEFAULT', 'inside_cisco', fallback=False)
 onedev = safeparser.getboolean('DEFAULT', 'onedev', fallback=False)
 
+dummy_int = safeparser.getboolean('DEFAULT', 'dummy_int', fallback=False)
+jumbo_frames = safeparser.getboolean('DEFAULT', 'jumbo_frames', fallback=False)
 
 #Testing Section
 icehouse = safeparser.getboolean('DEFAULT', 'icehouse', fallback=True)
 testingank = safeparser.getboolean('DEFAULT', 'testing_ank', fallback=False)
 testingstd = safeparser.getboolean('DEFAULT', 'testing_std', fallback=False)
+testingvmm = safeparser.getboolean('DEFAULT', 'testing_vmm', fallback=False)
 #ankstable = safeparser.getboolean('DEFAULT', 'stable ank', fallback=False)
 v144 = safeparser.getboolean('DEFAULT', 'v144', fallback=True)
 
@@ -294,7 +302,11 @@ def building_salt_extra():
         neutron_extnet_id = ''
     with open(("/tmp/extra"), "w") as extra:
         if not salt_master == 'none' or vagrant_pre_fourth:
-            extra.write("""master: {salt_master}\n""".format(salt_master=salt_master))
+            extra.write("""master: \n""")
+            for each in salt_master.split(','):
+                extra.write("""  - {each}\n""".format(each=each))
+            extra.write("""master_shuffle: True \n""")
+            extra.write("""master_alive_interval: 180 \n""")
         else:
             extra.write("""file_client: local\n""")
         extra.write("""id: {salt_id}\n""".format(salt_id=salt_id))
@@ -304,6 +316,12 @@ def building_salt_extra():
 
     with open(("/tmp/grains"), "w") as grains:
         # for section_name in safeparser.sections():
+        if cinder_device or cinder_file:
+            grains.write("""  cinder_enabled: True\n""")
+        else:
+            grains.write("""  cinder_enabled: False\n""")
+        if not uwm_port == '14000':
+            grains.write("""  uwm_url: http://{0}:{1}\n""".format(public_ip,uwm_port))
         for name, value in safeparser.items('DEFAULT'):
             grains.write("""  {name}: {value}\n""".format(name=name, value=value))
         grains.write("""  neutron_extnet_id: {neutid}\n""".format(neutid=neutron_extnet_id))
@@ -589,52 +607,59 @@ def adduser_vmmwsgi(name, password, tenant):
 def User_Creator(user_list, user_list_limited):
     UNET = True
     user_check = subprocess.check_output(kcall + ['user-list'])
-    guest_check = subprocess.check_output(kcall + ['user-list'])
-    if guest_account:
-        if 'guest' not in guest_check:
-            adduser_os('guest', 'guest', 'Member', 'guest', instances=100)
-            sleep(1)
-            adduser_vmmwsgi('guest', 'guest', 'guest')
-            Net_Creator('guest', 'guest')
+    # guest_check = subprocess.check_output(kcall + ['user-list'])
+    # if guest_account:
+    #     if 'guest' not in guest_check:
+    #         adduser_os('guest', 'guest', 'Member', 'guest', instances=100)
+    #         sleep(1)
+    #         adduser_vmmwsgi('guest', 'guest', 'guest')
+    #         Net_Creator('guest', 'guest')
     if user_list:
         for each_user in user_list.split(','):
             (user, password) = each_user.split(':')
             print ('user creation section for user {0}'.format(user))
+            subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'virl_core.project_present', user, 'user_password={0}'
+                .format(password), 'user_os_password={0}'.format(password)])
+            subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'virl_core.user_present', 'name={0}'.format(user),
+                             'project={0}'.format(user),'user_password={0}'.format(password), 'role=admin'])
             #print (user_check)
-            if user not in user_check or user == 'guest':
-                #print (user)
-                if user == 'flat':
-                    log.debug('flat user no longer allowed')
-                elif user == 'guest' and not cml:
-                    print 'guest no longer created in user list'
-                    # adduser_os(user, password, 'Member', user, instances=100)
-                    # sleep(1)
-                    # adduser_vmmwsgi(user, password, user)
-                else:
-                    adduser_os(user, password, 'admin', user, instances=100)
-                    sleep(1)
-                    adduser_vmmwsgi(user, password, user)
-                if UNET and not (user == 'flat'):
-                    Net_Creator(user, password)
-                else:
-                    adduser_vmmwsgi(user, password, user)
-                    log.debug('Not creating networks')
-            else:
-                log.debug('User already exits')
+            # if user not in user_check or user == 'guest':
+            #     #print (user)
+            #     if user == 'flat':
+            #         log.debug('flat user no longer allowed')
+            #     elif user == 'guest' and not cml:
+            #         print 'guest no longer created in user list'
+            #         # adduser_os(user, password, 'Member', user, instances=100)
+            #         # sleep(1)
+            #         # adduser_vmmwsgi(user, password, user)
+            #     else:
+            #         adduser_os(user, password, 'admin', user, instances=100)
+            #         sleep(1)
+            #         adduser_vmmwsgi(user, password, user)
+            #     if UNET and not (user == 'flat'):
+            #         Net_Creator(user, password)
+            #     else:
+            #         adduser_vmmwsgi(user, password, user)
+            #         log.debug('Not creating networks')
+            # else:
+            #     log.debug('User already exits')
     if user_list_limited:
         for each_limited_user in user_list_limited.split(','):
             (user, password, limit) = each_limited_user.split(':')
-            if user not in user_check:
-                adduser_os(user, password, 'Member', user, limit)
-                sleep(1)
-                adduser_vmmwsgi(user, password, user)
-                if UNET and not ( user == 'flat'):
-                    Net_Creator(user, password)
-                else:
-                    adduser_vmmwsgi(user, password, user)
-                    log.debug('Not creating networks')
-        else:
-            log.debug('Limited User already exits')
+            subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'virl_core.project_present', user, 'user_password={0}'
+                .format(password), 'user_os_password={0}'.format(password), 'quota_instances={0}'.format(limit)])
+        #
+        #     if user not in user_check:
+        #         adduser_os(user, password, 'Member', user, limit)
+        #         sleep(1)
+        #         adduser_vmmwsgi(user, password, user)
+        #         if UNET and not ( user == 'flat'):
+        #             Net_Creator(user, password)
+        #         else:
+        #             adduser_vmmwsgi(user, password, user)
+        #             log.debug('Not creating networks')
+        # else:
+        #     log.debug('Limited User already exits')
             #if 'flat' not in user_check:
             #    print('flat not in user check')
             #    adduser_os('flat', 'L23jj$$f', 'admin', 'flat', instances=100)
@@ -932,7 +957,7 @@ if __name__ == "__main__":
         print ' You can test with salt-call test.ping for ok result'
 
     if varg['first']:
-        for _each in ['zero', 'host', 'first']:
+        for _each in ['zero', 'host', 'first','ntp']:
             call_salt(_each)
         print 'Please validate the contents of /etc/network/interfaces before rebooting!'
     # if varg['second'] or varg['all']:
@@ -956,9 +981,13 @@ if __name__ == "__main__":
                                  'count={0}'.format(cinder_size)])
                 subprocess.call(['sudo', '/sbin/losetup', '-f', '--show', '{0}'.format(cinder_loc)])
                 subprocess.call(['sudo', '/sbin/pvcreate', '/dev/loop0'])
-            else:
+                subprocess.call(['sudo', '/sbin/vgcreate', 'cinder-volumes', '{0}'.format(cinder_loc)])
+            elif cinder_device:
                 subprocess.call(['sudo', '/sbin/pvcreate', '{0}'.format(cinder_loc)])
-            subprocess.call(['sudo', '/sbin/vgcreate', 'cinder-volumes', '{0}'.format(cinder_loc)])
+                subprocess.call(['sudo', '/sbin/vgcreate', 'cinder-volumes', '{0}'.format(cinder_loc)])
+            else:
+                print 'No cinder file or drive created'
+
 
         if horizon:
             call_salt('dash-install')
@@ -1039,11 +1068,10 @@ if __name__ == "__main__":
         building_salt_extra()
         sleep(5)
         print "please wait - this may take 30 minutes to complete"
-        call_salt('host')
-        call_salt('ntp')
-        call_salt('std')
-        #subprocess.call(['sudo', 'salt-call', '--local', '-l', 'quiet', 'state.sls', 'host'])
-        #subprocess.call(['sudo', 'salt-call', '--local', '-l', 'quiet', 'state.sls', 'ntp'])
+        #call_salt('host')
+        #call_salt('ntp')
+        subprocess.call(['sudo', 'salt-call', '--local', '-l', 'quiet', 'state.sls', 'host'])
+        subprocess.call(['sudo', 'salt-call', '--local', '-l', 'quiet', 'state.sls', 'ntp'])
         ##TODO lets just do all here and be done with it
         #alter_virlcfg()
         #subprocess.call(['sudo', 'rabbitmqctl', 'change_password', 'guest', ospassword])
@@ -1052,6 +1080,19 @@ if __name__ == "__main__":
         # subprocess.call(['sudo', 'service', 'ntp', 'start'])
         #fix_ntp()
         pass
+    if varg['password']:
+        k_delete_list = (subprocess.check_output( ['keystone --os-username admin --os-password {0}'
+                                                       ' --os-tenant-name admin'
+                                                       ' --os-auth-url=http://localhost:5000/v2.0 endpoint-list'
+                                                       ' | grep -w "regionOne" | cut -d "|" -f2'.format(ospassword)],
+                                                     shell=True)).split()
+        for _keach in k_delete_list:
+            subprocess.call(kcall + ['endpoint-delete', '{0}'.format(_keach)])
+        for _each in ['password_change','rabbitmq-install','keystone-install','keystone-setup','keystone-setup',
+                      'keystone-endpoint','osclients','openrc','glance-install','neutron-install','cinder-install',
+                      'dash-install','nova-install','neutron-changes','std','ank']:
+            call_salt(_each)
+
     if varg['images']:
         call_salt('routervms')
     if varg['renumber']:
@@ -1081,29 +1122,33 @@ if __name__ == "__main__":
                          '--execute=delete from services'])
         # for _neach in nova_service_list:
         #   subprocess.call(nmcall + ['service disable --host virl --service {0}'.format(_neach)])
-        subprocess.call(qcall + ['router-gateway-clear', 'guest'])
-        subprocess.call(qcall + ['router-interface-delete', 'guest', 'guest'])
-        subprocess.call(qcall + ['router-interface-delete', 'guest', 'guest_snat'])
-        subprocess.call(qcall + ['router-delete', 'guest'])
-        subprocess.call(qcall + ['subnet-delete', 'guest'])
-        subprocess.call(qcall + ['subnet-delete', 'guest_snat'])
+        subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'virl_core.project_absent', 'name=guest'])
+        # subprocess.call(qcall + ['router-gateway-clear', 'guest'])
+        # subprocess.call(qcall + ['router-interface-delete', 'guest', 'guest'])
+        # subprocess.call(qcall + ['router-interface-delete', 'guest', 'guest_snat'])
+        # subprocess.call(qcall + ['router-delete', 'guest'])
+        # subprocess.call(qcall + ['subnet-delete', 'guest'])
+        # subprocess.call(qcall + ['subnet-delete', 'guest_snat'])
+        # subprocess.call(qcall + ['net-delete', 'guest'])
+        # subprocess.call(qcall + ['net-delete', 'guest_snat'])
         subprocess.call(qcall + ['subnet-delete', 'flat'])
         subprocess.call(qcall + ['subnet-delete', 'flat1'])
         subprocess.call(qcall + ['subnet-delete', 'ext-net'])
-        subprocess.call(qcall + ['net-delete', 'guest'])
-        subprocess.call(qcall + ['net-delete', 'guest_snat'])
+
         create_basic_networks()
         subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'neutron_changes'])
+        call_salt('renum')
         if not vnc_passwd == 'letmein':
             set_vnc_password(vnc_passwd)
         if RAMDISK:
             # subprocess.call(['sudo', '-s', (BASEDIR + 'install_scripts/vsetup_ramdisk')])
             call_salt('nova-install')
         User_Creator(user_list, user_list_limited)
-        if guest_account:
-            Net_Creator('guest','guest')
-        else:
-            subprocess.call(['sudo', 'virl_uwm_client', 'project-delete', '--name', 'guest'])
+        call_salt('guest')
+        # if guest_account:
+        #     Net_Creator('guest','guest')
+        # else:
+        #     subprocess.call(['sudo', 'virl_uwm_client', 'project-delete', '--name', 'guest'])
 
         #subprocess.call(['sudo', 'service', 'networking', 'restart'])
         subprocess.call(['rm', '/home/virl/Desktop/Edit-settings.desktop'])
@@ -1123,11 +1168,11 @@ if __name__ == "__main__":
         if vagrant_keys or vagrant_calls:
             copy((BASEDIR + 'orig/authorized_keys2'), ('/home/virl/.ssh/authorized_keys2'))
             copy((BASEDIR + 'orig/authorized_keys'), ('/home/virl/.ssh/authorized_keys'))
-        if cml:
-            subprocess.call(['cp', '-f', (BASEDIR + 'cml.settings.ini'), '/home/virl/settings.ini'])
-            #subprocess.call(['sed', '-i', 's/cml = False/cml = True/g', '/home/virl/settings.ini'])
-        else:
-            subprocess.call(['cp', '-f', (BASEDIR + 'vsettings.ini'), '/home/virl/settings.ini'])
+        # if cml:
+        #     subprocess.call(['cp', '-f', (BASEDIR + 'cml.settings.ini'), '/home/virl/settings.ini'])
+        #     #subprocess.call(['sed', '-i', 's/cml = False/cml = True/g', '/home/virl/settings.ini'])
+        # else:
+        #     subprocess.call(['cp', '-f', (BASEDIR + 'vsettings.ini'), '/home/virl/settings.ini'])
 
     if path.exists('/tmp/install.out'):
         subprocess.call(['sudo', 'rm', '/tmp/install.out'])
