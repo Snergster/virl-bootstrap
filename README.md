@@ -1,13 +1,15 @@
 virl-bootstrap
 ==============
 
-couple files to get salted and configured
+prerequisites: 
 
-prereq: 
+The Network Install requires Internet access. If you are unable to access the Internet, do NOT use this procedure.
 
-install 14.4.1
+The VIRL software stack requires five physical or virtual network interfaces - eth0, eth1, eth2, eth3 and eth4. Configuration need only be applied to eth0, as your primary network access interface. This should be configured with an IP address and default gateway such that you have network access and MUST have Internet access.
 
-default user virl
+If you do not have five physical interfaces, attention must be paid when in STEP 10 below... 
+
+install Ubuntu 14.4.1 LTS on your server, creating a default user 'virl' 
 
 Login into your VIRL system and enter the following commands
 
@@ -95,6 +97,27 @@ Step 10 - Edit /etc/virl.ini
 -- location region
 -- guest account
 -- desktop
+
+IF YOU DO NOT HAVE 5 PHYSICAL INTERFACES ON YOUR SERVER... determine the number of dummy interfaces that you require. If you server has two interfaces, you would require three additional dummy interfaces. If you have four physical interfaces, you would require one additional dummy interface.
+
+In the /etc/virl.ini, you must map the interfaces to 'dummy' interfaces as per the field settings below. The 'dummy_int' field MUST be set to 'True'
+
+ DEFAULT l2_port: eth1
+ MAPPED l2_port: dummy0 
+ DEFAULT l2_port2: eth2
+ MAPPED l2_port2: dummy1 
+ DEFAULT l3_port: eth1
+ MAPPED l3_port: dummy2 
+ DEFAULT internalnet_port: eth4
+ MAPPED internalnet_port: dummy3 
+ DEFAULT dummy_int: False
+ 
+ ENABLED dummy_int: True 
+
+The example above maps four physical interfaces to four dummy interfaces. This may NOT be required in your deployment scenario. 
+
+Now continue with the installation procedure below...
+
 
 NOTE - ensure that you have reachability to your ntp server. If you are using DHCP, you do not need to alter the 'first nameserver' and 'second nameserver' fields. If you are using static IP addressing, ensure that you have reachability to your nameservers.
 
