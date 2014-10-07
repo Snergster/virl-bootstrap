@@ -175,15 +175,16 @@ salt = safeparser.getboolean('DEFAULT', 'salt', fallback=True)
 salt_master = safeparser.get('DEFAULT', 'salt_master', fallback='none')
 salt_id = safeparser.get('DEFAULT', 'salt_id', fallback='virl')
 salt_domain = safeparser.get('DEFAULT', 'salt_domain', fallback='virl.info')
+salt_env = safeparser.get('DEFAULT', 'salt_env', fallback='none')
 virl_type = safeparser.get('DEFAULT', 'Is_this_a_stable_or_testing_server', fallback='stable')
 cisco_internal = safeparser.getboolean('DEFAULT', 'inside_cisco', fallback=False)
 onedev = safeparser.getboolean('DEFAULT', 'onedev', fallback=False)
-
 dummy_int = safeparser.getboolean('DEFAULT', 'dummy_int', fallback=False)
 jumbo_frames = safeparser.getboolean('DEFAULT', 'jumbo_frames', fallback=False)
 
 #Testing Section
 icehouse = safeparser.getboolean('DEFAULT', 'icehouse', fallback=True)
+
 testingank = safeparser.getboolean('DEFAULT', 'testing_ank', fallback=False)
 testingstd = safeparser.getboolean('DEFAULT', 'testing_std', fallback=False)
 testingvmm = safeparser.getboolean('DEFAULT', 'testing_vmm', fallback=False)
@@ -297,34 +298,31 @@ def building_salt_extra():
                                             ' --os-password {ospassword} --os-auth-url=http://localhost:5000/v2.0'
                                             ' net-list | grep -w "ext-net" | cut -d "|" -f2'
                                            .format(ospassword=ospassword)], shell=True)[1:33])
+        service_tenid = (subprocess.check_output(['/usr/bin/keystone --os-tenant-name admin --os-username admin'
+                                            ' --os-password {ospassword} --os-auth-url=http://localhost:5000/v2.0'
+                                            ' tenant-list | grep -w "service" | cut -d "|" -f2'
+                                           .format(ospassword=ospassword)], shell=True)[1:33])
     else:
         admin_tenid = ''
         neutron_extnet_id = ''
+        service_tenid = ''
     with open(("/tmp/extra"), "w") as extra:
         if not salt_master == 'none' or vagrant_pre_fourth:
             extra.write("""master: \n""")
             for each in salt_master.split(','):
                 extra.write("""  - {each}\n""".format(each=each))
+            extra.write("""master_type: failover \n""")
+            extra.write("""verify_master_pubkey_sign: True \n""")
             extra.write("""master_shuffle: True \n""")
             extra.write("""master_alive_interval: 180 \n""")
         else:
             extra.write("""file_client: local\n""")
+        # if not salt_env == 'none':
+        #     extra.write("""environment: {0}\n""".format(salt_env))
         extra.write("""id: {salt_id}\n""".format(salt_id=salt_id))
         extra.write("""append_domain: {salt_domain}\n""".format(salt_domain=salt_domain))
-        extra.write("""grains_dirs:\n""")
-        extra.write("""  - /etc/salt/virl\n""")
-
-    with open(("/tmp/grains"), "w") as grains:
-        # for section_name in safeparser.sections():
-        if cinder_device or cinder_file:
-            grains.write("""  cinder_enabled: True\n""")
-        else:
-            grains.write("""  cinder_enabled: False\n""")
-        if not uwm_port == '14000':
-            grains.write("""  uwm_url: http://{0}:{1}\n""".format(public_ip,uwm_port))
-        for name, value in safeparser.items('DEFAULT'):
-            grains.write("""  {name}: {value}\n""".format(name=name, value=value))
-        grains.write("""  neutron_extnet_id: {neutid}\n""".format(neutid=neutron_extnet_id))
+        # extra.write("""grains_dirs:\n""")
+        # extra.write("""  - /etc/salt/virl\n""")
     with open(("/tmp/openstack"), "w") as openstack:
         openstack.write("""keystone.user: admin
 keystone.password: {ospassword}
@@ -334,10 +332,40 @@ keystone.auth_url: 'http://127.0.0.1:5000/v2.0/'
 keystone.token: {kstoken}
 mysql.user: root
 mysql.pass: {mypass}\n""".format(ospassword=ospassword, kstoken=ks_token, tenid=admin_tenid, mypass=mypassword))
+
+    if path.exists('/usr/bin/salt-call'):
+        with open(("/tmp/foo"), "w") as salt_grain:
+            salt_grain.write("""{""")
+            for key, value in (safeparser.items('DEFAULT')):
+                salt_grain.write(""" '{key}': '{value}',""".format(key=key,value=value))
+            if cinder_device or cinder_file:
+                salt_grain.write("""  'cinder_enabled': 'True',""")
+            else:
+                salt_grain.write("""  'cinder_enabled': 'False',""")
+            if not uwm_port == '14000':
+                salt_grain.write("""  'uwm_url': 'http://{0}:{1}',""".format(public_ip,uwm_port))
+            salt_grain.write(""" 'neutron_extnet_id': '{neutid}',""".format(neutid=neutron_extnet_id))
+            salt_grain.write(""" 'service_id': '{serviceid}'""".format(serviceid=service_tenid))
+            salt_grain.write("""}""")
+        with open(("/tmp/foo"), "r") as salt_grain_read:
+          subprocess.call(['sudo', 'salt-call', '--local','grains.setvals', salt_grain_read.read() ])
+    else:
+        with open(("/tmp/grains"), "w") as grains:
+            # for section_name in safeparser.sections():
+            if cinder_device or cinder_file:
+                grains.write("""  cinder_enabled: True\n""")
+            else:
+                grains.write("""  cinder_enabled: False\n""")
+            if not uwm_port == '14000':
+                grains.write("""  uwm_url: http://{0}:{1}\n""".format(public_ip,uwm_port))
+
+
+            for name, value in safeparser.items('DEFAULT'):
+                grains.write("""  {name}: {value}\n""".format(name=name, value=value))
+            grains.write("""  neutron_extnet_id: {neutid}\n""".format(neutid=neutron_extnet_id))
+        subprocess.call(['sudo', 'cp', '-f', ('/tmp/grains'), '/etc/salt'])
     subprocess.call(['sudo', 'cp', '-f', ('/tmp/extra'), '/etc/salt/minion.d/extra.conf'])
-    subprocess.call(['sudo', 'cp', '-f', ('/tmp/openstack'),
-                             '/etc/salt/minion.d/openstack.conf'])
-    subprocess.call(['sudo', 'cp', '-f', ('/tmp/grains'), '/etc/salt'])
+    subprocess.call(['sudo', 'cp', '-f', ('/tmp/openstack'), '/etc/salt/minion.d/openstack.conf'])
     subprocess.call(['sudo', 'service', 'salt-minion', 'restart'])
 
 
@@ -465,63 +493,6 @@ net.ipv4.tcp_keepalive_intvl=60
         system(cpstr % {'from': '/tmp/sysctl.conf', 'to': '/etc/sysctl.conf'})
     print ('added keepalive')
 
-# def place_startup_scripts():
-#     ##TODO: salt the no horizon html case
-#     if not horizon:
-#         subprocess.call(['sudo', 'cp', '-f', (BASEDIR + 'install_scripts/index.html'), '/var/www/index.html'])
-    # subprocess.call(['sudo', 'cp', '-f', (BASEDIR + 'install_scripts/init.d/50-default.conf'),
-    #                  ('/etc/rsyslog.d/50-default.conf')])
-    # subprocess.call(
-    #     ['sudo', 'cp', '-f', (BASEDIR + 'vinstall.py'), '/usr/local/bin/vinstall'])
-    # subprocess.call(['sudo', 'chmod', '755', '/usr/local/bin/vinstall'])
-
-    # system(cpstr % {'from': (BASEDIR + 'install_scripts/init.d/ank-webserver.init'),
-    #                 'to': '/etc/init.d/ank-webserver'})
-    #system(cpstr % {'from': (BASEDIR + 'install_scripts/init.d/devstack.init'), 'to': '/etc/init.d/devstack'})
-    # system(cpstr % {'from': (BASEDIR + 'install_scripts/init.d/tightvnc.init'), 'to': '/etc/init.d/tightvnc'})
-    #system(cpstr % {'from': (BASEDIR + 'install_scripts/orig/keystone_token_delete.sh'),
-    #                'to': '/usr/local/bin/keystone_token_delete.sh'})
-    #subprocess.call(['sudo', 'chmod', '755', '/usr/local/bin/keystone_token_delete.sh'])
-    # subprocess.call(['sudo', 'sed', '-i', 's/MYSQLPASS/{0}/g'.format(mypassword),
-    #                  '/usr/local/bin/keystone_token_delete.sh'])
-    #subprocess.call(['sudo', 'update-rc.d', 'brctl.py', 'defaults'])
-    # if cariden:
-    #     system(cpstr % {'from': (BASEDIR + 'install_scripts/init.d/rlm.init'), 'to': '/etc/init.d/rlm'})
-    # system(cpstr % {'from': (BASEDIR + 'install_scripts/init.d/nova-serialproxy.init'),
-    #                 'to': '/etc/init.d/nova-serialproxy'})
-    # system(lnstr % {'orig': '/etc/init.d/nova-serialproxy', 'link': '/etc/rc2.d/S98nova-serialproxy'})
-    # system(cpstr % {'from': '/opt/stack/nova/nova/console/serial.html', 'to': '/usr/share/nova-serial/serial.html'})
-    # subprocess.call(['sudo', 'chmod', '755', '/etc/init.d/nova-serialproxy'])
-    # system(cpstr % {'from': '/opt/stack/nova/nova/console/term.js', 'to': '/usr/share/nova-serial/term.js'})
-    # system(
-    #     cpstr % {'from': (BASEDIR + 'install_scripts/init.d/virl-std.init'), 'to': '/etc/init.d/virl-std'})
-    # system(
-    #     cpstr % {'from': (BASEDIR + 'install_scripts/init.d/virl-uwm.init'), 'to': '/etc/init.d/virl-uwm'})
-    # subprocess.call(
-    #     ['sudo', 'chmod', '755', '/usr/local/bin/vinstall'])
-         #'/etc/init.d/ank-webserver', '/etc/init.d/virl-std', '/etc/init.d/virl-uwm'])
-    #Edit the autonetkit file and move into place
-    # replace((BASEDIR + 'install_scripts/orig/autonetkit.cfg'), 'ANKPORT', ank)
-    # system(cpstr % {'from': (BASEDIR + 'install_scripts/orig/autonetkit.cfg'),
-    #                 'to': '/root/.autonetkit/autonetkit.cfg'})
-
-    #'/etc/init.d/ank-webserver', '/etc/init.d/virl-vmmwsgi', '/etc/init.d/rlm'])
-    # if cariden:
-    #     system(lnstr % {'orig': '/etc/init.d/rlm', 'link': '/etc/rc2.d/S98rlm'})
-    # system(lnstr % {'orig': '/etc/init.d/ank-webserver', 'link': '/etc/rc2.d/S98ank-webserver'})
-    # system(lnstr % {'orig': '/etc/init.d/virl-std', 'link': '/etc/rc2.d/S98virl-std'})
-    # system(lnstr % {'orig': '/etc/init.d/virl-uwm', 'link': '/etc/rc2.d/S98virl-uwm'})
-    #system(lnstr % {'orig': '/etc/init.d/devstack', 'link': '/etc/rc2.d/S97devstack'})
-    # if vnc:
-    #     system(lnstr % {'orig': '/etc/init.d/tightvnc', 'link': '/etc/rc2.d/S97tightvnc'})
-
-# def setup_vnc():
-#     rmtree('/home/virl/.vnc', ignore_errors=True)
-#     #mkdir('/home/virl/.vnc', 0700)
-#     mkdir('/home/virl/.vnc', 0o700)
-#     subprocess.call(['cp', '-f', (BASEDIR + 'install_scripts/orig/xstartup'), '/home/virl/.vnc/xstartup'])
-#     subprocess.call(['cp', '-f', (BASEDIR + 'install_scripts/vnc.passwd'), '/home/virl/.vnc/passwd'])
-#     subprocess.call(['sudo', 'service', 'tightvnc', 'restart'])
 
 
 def setup_vmm():
@@ -704,167 +675,11 @@ def desktop_icons():
                 makedirs('/home/virl/.config/autostart')
             subprocess.call(['sudo', 'chown', '-R', 'virl:virl', '/home/virl/.config'])
 
-#             with open("/home/virl/.config/autostart/kvmchecker.desktop", "w") as kvmchecker:
-#                 kvmchecker.write("""[Desktop Entry]
-# Name=kvmchecker
-# Comment=verify vt-x support
-# Exec=/usr/local/bin/kvmchecker
-# Hidden=false
-# NoDisplay=false
-# X-GNOME-Autostart-enabled=true
-# Type=Application
-# """)
-#             subprocess.call(['sudo', 'chmod', 'a+x', '/home/virl/.config/autostart/kvmchecker.desktop'])
 
-#             with open("/home/virl/.config/autostart/wallpaper.desktop", "w") as wallpaper:
-#                 wallpaper.write("""[Desktop Entry]
-# Name=wallpaper
-# Comment=virl desktop image
-# Exec=/usr/bin/pcmanfm --set-wallpaper=/home/virl/.virl.jpg
-# Hidden=false
-# NoDisplay=false
-# X-GNOME-Autostart-enabled=true
-# Type=Application
-# """)
-#
-#             subprocess.call(['sudo', 'chmod', 'a+x', '/home/virl/.config/autostart/wallpaper.desktop'])
             desktop = '/home/virl/Desktop'
             if not path.exists(desktop):
                 mkdir('/home/virl/Desktop')
-#             with open("/home/virl/Desktop/Xterm.desktop", "w") as xconf:
-#                 xconf.write("""[Desktop Entry]
-# Version=1.0
-# Name=xterm
-# Comment=xterm for folks
-# Exec=/usr/bin/xterm
-# Icon=/usr/share/icons/Humanity/apps/48/utilities-terminal.svg
-# Terminal=false
-# Type=Application
-# Categories=Utility;Application;
-# """)
-#             subprocess.call(['sudo', 'chmod', 'a+x', '/home/virl/Desktop/Xterm.desktop'])
-#             if not cml:
-#                 with open("/home/virl/Desktop/VMMaestro.desktop", "w") as cmlconf:
-#                     cmlconf.write("""[Desktop Entry]
-# Version=1.0
-# Name=VMMaestro
-# Comment=VMMaestro for folks
-# Exec=/home/virl/VMMaestro-linux/VMMaestro
-# Icon=/home/virl/VMMaestro-linux/icon.xpm
-# Terminal=false
-# Type=Application
-# Categories=Utility;Application;
-# """)
-#                 subprocess.call(['sudo', 'chmod', 'a+x', '/home/virl/Desktop/VMMaestro.desktop'])
-#             with open("/home/virl/Desktop/VIRL-rehost.desktop", "w") as vinstallconf:
-#                 vinstallconf.write("""[Desktop Entry]
-# Version=1.0
-# Name=1. Install networking
-# Comment=To finish install
-# Exec=/usr/local/bin/vinstall rehost
-# Icon=/usr/share/icons/gnome/48x48/status/network-wired-disconnected.png
-# Terminal=true
-# Type=Application
-# Categories=Utility;Application;
-# """)
-#             subprocess.call(['sudo', 'chmod', 'a+x', '/home/virl/Desktop/VIRL-rehost.desktop'])
-#             with open("/home/virl/Desktop/VIRL-renumber.desktop", "w") as vchangesconf:
-#                 vchangesconf.write("""[Desktop Entry]
-# Version=1.0
-# Name=3. Install changes
-# Comment=Only after setting.ini changes
-# Exec=/usr/local/bin/vinstall renumber
-# Icon=/usr/share/icons/Humanity/apps/48/gconf-editor.svg
-# Terminal=true
-# Type=Application
-# Categories=Utility;Application;
-# """)
-#             subprocess.call(['sudo', 'chmod', 'a+x', '/home/virl/Desktop/VIRL-renumber.desktop'])
-#             with open("/home/virl/Desktop/Logout.desktop", "w") as vlogoutconf:
-#                 vlogoutconf.write("""[Desktop Entry]
-# Version=1.0
-# Name=LOGOUT
-# Comment=To finish install
-# Exec=/usr/bin/lubuntu-logout
-# Icon=/usr/share/icons/gnome/48x48/status/computer-fail.png
-# Terminal=false
-# Type=Application
-# Categories=Utility;Application;
-# """)
-#             subprocess.call(['sudo', 'chmod', 'a+x', '/home/virl/Desktop/Logout.desktop'])
-#             with open("/home/virl/Desktop/Reboot2.desktop", "w") as vrebootconf:
-#                 vrebootconf.write("""[Desktop Entry]
-# Version=1.0
-# Name=2. REBOOT
-# Comment=To reboot
-# Exec=sudo /sbin/reboot
-# Icon=/usr/share/icons/gnome/48x48/status/computer-fail.png
-# Terminal=false
-# Type=Application
-# Categories=Utility;Application;
-# """)
-#             subprocess.call(['sudo', 'chmod', 'a+x', '/home/virl/Desktop/Reboot2.desktop'])
-#             with open("/home/virl/Desktop/Reboot.desktop", "w") as vrebootconf:
-#                 vrebootconf.write("""[Desktop Entry]
-# Version=1.0
-# Name=4. REBOOT
-# Comment=To reboot
-# Exec=sudo /sbin/reboot
-# Icon=/usr/share/icons/gnome/48x48/status/computer-fail.png
-# Terminal=false
-# Type=Application
-# Categories=Utility;Application;
-# """)
-#             subprocess.call(['sudo', 'chmod', 'a+x', '/home/virl/Desktop/Reboot.desktop'])
-#             with open("/home/virl/Desktop/IP-ADDRESS.desktop", "w") as ipaconf:
-#                 ipaconf.write("""[Desktop Entry]
-# Version=1.0
-# Name=ip-address
-# Comment=To see ip address
-# Exec=xterm -e "/sbin/ifconfig eth0 | grep inet ;bash"
-# Icon=/usr/share/icons/Humanity/apps/logviewer.svg
-# Terminal=false
-# Type=Application
-# Categories=Utility;Application;
-# """)
-#             subprocess.call(['sudo', 'chmod', 'a+x', '/home/virl/Desktop/IP-ADDRESS.desktop'])
-#             with open("/home/virl/Desktop/README.desktop", "w") as readmeconf:
-#                 readmeconf.write("""[Desktop Entry]
-# Version=1.0
-# Name=README
-# Comment=Readme for install
-# Exec=gedit /home/virl/.README
-# Icon=/usr/share/icons/Humanity/apps/48/accessories-dictionary.svg
-# Terminal=false
-# Type=Application
-# Categories=Utility;Application;
-# """)
-#             subprocess.call(['sudo', 'chmod', 'a+x', '/home/virl/Desktop/README.desktop'])
-#             with open("/home/virl/Desktop/Edit-settings.desktop", "w") as settingsconf:
-#                 settingsconf.write("""[Desktop Entry]
-# Version=1.0
-# Name=0. Edit virl.ini
-# Comment=To edit virl.ini file
-# Exec=sudo gedit /etc/virl.ini
-# Icon=/usr/share/icons/Humanity/apps/48/gedit-icon.svg
-# Terminal=false
-# Type=Application
-# Categories=Utility;Application;
-# """)
-#             subprocess.call(['sudo', 'chmod', 'a+x', '/home/virl/Desktop/Edit-settings.desktop'])
-#             if not cml:
-#                 with open("/home/virl/Desktop/Videos.desktop", "w") as videosconf:
-#                     videosconf.write("""[Desktop Entry]
-# Version=1.0
-# Name=Video Playlist
-# Comment=Icon Details
-# Exec=/usr/bin/vlc .Videos.xspf
-# Icon=/usr/share/icons/hicolor/48x48/apps/vlc.png
-# Terminal=false
-# Type=Application
-# Categories=Utility;Application;
-# """)
-#                 subprocess.call(['sudo', 'chmod', 'a+x', '/home/virl/Desktop/Videos.desktop'])
+
             subprocess.call(['sudo', 'chown', '-R', 'virl:virl', '/home/virl/Desktop'])
             subprocess.call(['mkdir', '-p', '/home/virl/.config/pcmanfm/lubuntu'])
             subprocess.call(['cp', '-f', (BASEDIR + 'install_scripts/orig/desktop-items-0.conf'),
@@ -959,18 +774,26 @@ if __name__ == "__main__":
     if varg['first']:
         for _each in ['zero', 'host', 'first','ntp']:
             call_salt(_each)
+        subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'saltutil.sync_all'])
         print 'Please validate the contents of /etc/network/interfaces before rebooting!'
-    # if varg['second'] or varg['all']:
-    #     # for _each in ['zero','first','host']:
-    #     call_salt('first')
-    #     # subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'zero'])
-    #     # subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'first'])
-    #     # subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'host'])
 
     if varg['second'] or varg['all']:
         for _each in ['mysql-install','rabbitmq-install','keystone-install','keystone-setup','keystone-setup',
-                      'keystone-endpoint','osclients','openrc','glance-install','neutron-install']:
+                      'keystone-endpoint','osclients','openrc','glance-install']:
             call_salt(_each)
+
+        admin_tenid = (subprocess.check_output(['/usr/bin/keystone --os-tenant-name admin --os-username admin'
+                                            ' --os-password {ospassword} --os-auth-url=http://localhost:5000/v2.0'
+                                            ' tenant-list | grep -w "admin" | cut -d "|" -f2'
+                                           .format(ospassword=ospassword)], shell=True)[1:33])
+        service_tenid = (subprocess.check_output(['/usr/bin/keystone --os-tenant-name admin --os-username admin'
+                                            ' --os-password {ospassword} --os-auth-url=http://localhost:5000/v2.0'
+                                            ' tenant-list | grep -w "service" | cut -d "|" -f2'
+                                           .format(ospassword=ospassword)], shell=True)[1:33])
+        subprocess.call(['sudo', 'crudini', '--set','/etc/salt/minion.d/openstack.conf', '',
+                         'keystone.tenant_id', (' ' + admin_tenid)])
+        building_salt_extra()
+        call_salt('neutron-install')
 
     if varg['third'] or varg['all']:
         if cinder:
@@ -998,17 +821,17 @@ if __name__ == "__main__":
                                             ' --os-password {ospassword} --os-auth-url=http://localhost:5000/v2.0'
                                             ' tenant-list | grep -w "admin" | cut -d "|" -f2'
                                            .format(ospassword=ospassword)], shell=True)[1:33])
-        service_tenid = (subprocess.check_output(['/usr/bin/keystone --os-tenant-name admin --os-username admin'
-                                            ' --os-password {ospassword} --os-auth-url=http://localhost:5000/v2.0'
-                                            ' tenant-list | grep -w "service" | cut -d "|" -f2'
-                                           .format(ospassword=ospassword)], shell=True)[1:33])
-        # print admin_tenid
-        subprocess.call(['sudo', 'crudini', '--set','/etc/neutron/neutron.conf', 'DEFAULT',
-                         'nova_admin_tenant_id', service_tenid])
+        # service_tenid = (subprocess.check_output(['/usr/bin/keystone --os-tenant-name admin --os-username admin'
+        #                                     ' --os-password {ospassword} --os-auth-url=http://localhost:5000/v2.0'
+        #                                     ' tenant-list | grep -w "service" | cut -d "|" -f2'
+        #                                    .format(ospassword=ospassword)], shell=True)[1:33])
+        # # print admin_tenid
+        # subprocess.call(['sudo', 'crudini', '--set','/etc/neutron/neutron.conf', 'DEFAULT',
+        #                  'nova_admin_tenant_id', service_tenid])
         subprocess.call(['sudo', 'crudini', '--set','/etc/salt/minion.d/openstack.conf', '',
-                         'keystone.tenant_id', (' ' + admin_tenid)])
-        if neutron_switch == 'openvswitch':
-            create_ovs_networks()
+                          'keystone.tenant_id', (' ' + admin_tenid)])
+        # if neutron_switch == 'openvswitch':
+        #     create_ovs_networks()
         create_basic_networks()
     if varg['third'] or varg['all']:
         call_salt('nova-install')
@@ -1048,14 +871,6 @@ if __name__ == "__main__":
     if desktop:
         if varg['desktop']:
             subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'desktop'])
-            # _xterm = 'xterm -e %s'
-            # subprocess.call(['sudo', 'crudini', '--set','/home/virl/.config/libfm/libfm.conf', 'config', 'terminal',
-            #                  _xterm ])
-            # subprocess.call(['sudo', 'crudini', '--set','/etc/xdg/lubuntu/libfm/libfm.conf', 'config', 'terminal',
-            #                  _xterm ])
-            # subprocess.call(['sudo', 'crudini', '--set','/etc/lightdm/lightdm.conf.d/20-lubuntu.conf',
-            #          'SeatDefaults', 'allow-guest', ' False'])
-            # desktop_icons()
 
             sleep(5)
         if onedev:
@@ -1072,14 +887,6 @@ if __name__ == "__main__":
         #call_salt('ntp')
         subprocess.call(['sudo', 'salt-call', '--local', '-l', 'quiet', 'state.sls', 'host'])
         subprocess.call(['sudo', 'salt-call', '--local', '-l', 'quiet', 'state.sls', 'ntp'])
-        ##TODO lets just do all here and be done with it
-        #alter_virlcfg()
-        #subprocess.call(['sudo', 'rabbitmqctl', 'change_password', 'guest', ospassword])
-        # subprocess.call(['sudo', 'service', 'ntp', 'stop'])
-        # subprocess.call(['sudo', 'ntpdate', ntp_server])
-        # subprocess.call(['sudo', 'service', 'ntp', 'start'])
-        #fix_ntp()
-        pass
     if varg['password']:
         k_delete_list = (subprocess.check_output( ['keystone --os-username admin --os-password {0}'
                                                        ' --os-tenant-name admin'
@@ -1090,7 +897,7 @@ if __name__ == "__main__":
             subprocess.call(kcall + ['endpoint-delete', '{0}'.format(_keach)])
         for _each in ['password_change','rabbitmq-install','keystone-install','keystone-setup','keystone-setup',
                       'keystone-endpoint','osclients','openrc','glance-install','neutron-install','cinder-install',
-                      'dash-install','nova-install','neutron-changes','std','ank']:
+                      'dash-install','nova-install','neutron_changes','std','ank']:
             call_salt(_each)
 
     if varg['images']:
