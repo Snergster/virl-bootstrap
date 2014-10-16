@@ -5,7 +5,7 @@
 """virl install.
 
 Usage:
-  foo.py zero | first | second | third | fourth | salt | test | iso | wrap | desktop | rehost | renumber | compute | all | images | password
+  foo.py zero | first | second | third | fourth | salt | test | iso | wrap | desktop | rehost | renumber | compute | all | images | password | vmm | renumber2 | rehost1
 
 Options:
   --version             shows program's version number and exit
@@ -219,6 +219,16 @@ else:
     std_loc = 'bins/std'
     ank_loc = 'bins/ank/'
 
+host_sls = ['hostname','domain','public_port','using_dhcp_on_the_public_port','static_ip','public_gateway','public_netmask',
+            'l2_port','l2_address','l2_address2','l3_address','l2_port2','l2_port2_enabled','l3_port','first_nameserver',
+            'second_nameserver','internalnet_port','inernalnet_netmask','l3_mask','l2_mask2','l2_mask','dummy_int',
+            'jumbo_frames']
+
+host_sls_values = [hostname,fqdn,public_port,dhcp_public,public_ip,public_gateway,public_netmask,
+            l2_port,l2_address,l2_address2,l3_address,l2_port2,l2_port2_enabled,l3_port,dns1,
+            dns2,internalnet_port,internalnet_netmask,l3_mask,l2_mask2,l2_mask,dummy_int,
+            jumbo_frames]
+
 
 qadmincall = ['/usr/bin/neutron', '--os-tenant-name', 'admin', '--os-username', 'admin', '--os-password',
               '{0}'.format(ospassword), '--os-auth-url=http://localhost:5000/v2.0']
@@ -285,8 +295,23 @@ def alter_virlcfg():
     subprocess.call(['sudo', 'crudini', '--set','/usr/local/lib/python2.7/dist-packages/virl_pkg_data/conf/builtin.cfg',
                      'orchestration', 'network_security_groups', ' False'])
 
-
 def building_salt_extra():
+    with open(("/tmp/extra"), "w") as extra:
+        if not salt_master == 'none' or vagrant_pre_fourth:
+            extra.write("""master: \n""")
+            for each in salt_master.split(','):
+                extra.write("""  - {each}\n""".format(each=each))
+            extra.write("""master_type: failover \n""")
+            extra.write("""verify_master_pubkey_sign: True \n""")
+            extra.write("""master_shuffle: True \n""")
+            extra.write("""master_alive_interval: 180 \n""")
+        else:
+            extra.write("""file_client: local\n""")
+        extra.write("""id: {salt_id}\n""".format(salt_id=salt_id))
+        extra.write("""append_domain: {salt_domain}\n""".format(salt_domain=salt_domain))
+    subprocess.call(['sudo', 'cp', '-f', ('/tmp/extra'), '/etc/salt/minion.d/extra.conf'])
+
+def building_salt_all():
     if not path.exists('/etc/salt/virl'):
         subprocess.call(['sudo', 'mkdir', '-p', '/etc/salt/virl'])
     if path.exists('/usr/local/bin/keystone') or path.exists('/usr/bin/keystone'):
@@ -306,23 +331,7 @@ def building_salt_extra():
         admin_tenid = ''
         neutron_extnet_id = ''
         service_tenid = ''
-    with open(("/tmp/extra"), "w") as extra:
-        if not salt_master == 'none' or vagrant_pre_fourth:
-            extra.write("""master: \n""")
-            for each in salt_master.split(','):
-                extra.write("""  - {each}\n""".format(each=each))
-            extra.write("""master_type: failover \n""")
-            extra.write("""verify_master_pubkey_sign: True \n""")
-            extra.write("""master_shuffle: True \n""")
-            extra.write("""master_alive_interval: 180 \n""")
-        else:
-            extra.write("""file_client: local\n""")
-        # if not salt_env == 'none':
-        #     extra.write("""environment: {0}\n""".format(salt_env))
-        extra.write("""id: {salt_id}\n""".format(salt_id=salt_id))
-        extra.write("""append_domain: {salt_domain}\n""".format(salt_domain=salt_domain))
-        # extra.write("""grains_dirs:\n""")
-        # extra.write("""  - /etc/salt/virl\n""")
+    building_salt_extra()
     with open(("/tmp/openstack"), "w") as openstack:
         openstack.write("""keystone.user: admin
 keystone.password: {ospassword}
@@ -337,7 +346,10 @@ mysql.pass: {mypass}\n""".format(ospassword=ospassword, kstoken=ks_token, tenid=
         with open(("/tmp/foo"), "w") as salt_grain:
             salt_grain.write("""{""")
             for key, value in (safeparser.items('DEFAULT')):
-                salt_grain.write(""" '{key}': '{value}',""".format(key=key,value=value))
+                if value.lower() == 'true' or value.lower() == 'false':
+                    salt_grain.write(""" '{key}': {value} ,""".format(key=key,value=value))
+                else:
+                    salt_grain.write(""" '{key}': '{value}',""".format(key=key,value=value))
             if cinder_device or cinder_file:
                 salt_grain.write("""  'cinder_enabled': 'True',""")
             else:
@@ -364,7 +376,6 @@ mysql.pass: {mypass}\n""".format(ospassword=ospassword, kstoken=ks_token, tenid=
                 grains.write("""  {name}: {value}\n""".format(name=name, value=value))
             grains.write("""  neutron_extnet_id: {neutid}\n""".format(neutid=neutron_extnet_id))
         subprocess.call(['sudo', 'cp', '-f', ('/tmp/grains'), '/etc/salt'])
-    subprocess.call(['sudo', 'cp', '-f', ('/tmp/extra'), '/etc/salt/minion.d/extra.conf'])
     subprocess.call(['sudo', 'cp', '-f', ('/tmp/openstack'), '/etc/salt/minion.d/openstack.conf'])
     subprocess.call(['sudo', 'service', 'salt-minion', 'restart'])
 
@@ -592,51 +603,14 @@ def User_Creator(user_list, user_list_limited):
             subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'virl_core.project_present', user, 'user_password={0}'
                 .format(password), 'user_os_password={0}'.format(password)])
             subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'virl_core.user_present', 'name={0}'.format(user),
-                             'project={0}'.format(user),'user_password={0}'.format(password), 'role=admin'])
-            #print (user_check)
-            # if user not in user_check or user == 'guest':
-            #     #print (user)
-            #     if user == 'flat':
-            #         log.debug('flat user no longer allowed')
-            #     elif user == 'guest' and not cml:
-            #         print 'guest no longer created in user list'
-            #         # adduser_os(user, password, 'Member', user, instances=100)
-            #         # sleep(1)
-            #         # adduser_vmmwsgi(user, password, user)
-            #     else:
-            #         adduser_os(user, password, 'admin', user, instances=100)
-            #         sleep(1)
-            #         adduser_vmmwsgi(user, password, user)
-            #     if UNET and not (user == 'flat'):
-            #         Net_Creator(user, password)
-            #     else:
-            #         adduser_vmmwsgi(user, password, user)
-            #         log.debug('Not creating networks')
-            # else:
-            #     log.debug('User already exits')
+                             'project={0}'.format(user),'password={0}'.format(password), 'role=admin'])
+
     if user_list_limited:
         for each_limited_user in user_list_limited.split(','):
             (user, password, limit) = each_limited_user.split(':')
             subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'virl_core.project_present', user, 'user_password={0}'
                 .format(password), 'user_os_password={0}'.format(password), 'quota_instances={0}'.format(limit)])
-        #
-        #     if user not in user_check:
-        #         adduser_os(user, password, 'Member', user, limit)
-        #         sleep(1)
-        #         adduser_vmmwsgi(user, password, user)
-        #         if UNET and not ( user == 'flat'):
-        #             Net_Creator(user, password)
-        #         else:
-        #             adduser_vmmwsgi(user, password, user)
-        #             log.debug('Not creating networks')
-        # else:
-        #     log.debug('Limited User already exits')
-            #if 'flat' not in user_check:
-            #    print('flat not in user check')
-            #    adduser_os('flat', 'L23jj$$f', 'admin', 'flat', instances=100)
-            #    # Intentionally different password since not in user-list
-            #    Adduser_Vmmwsgi('flat', 'L23kk$$f', 'flat')
-            #    log.debug('fake flat created')
+
 
 def adduser_os(name, password, role, tenant, instances):
     try:
@@ -764,7 +738,7 @@ if __name__ == "__main__":
         else:
             subprocess.call(['sudo', '{0}install_scripts/install_salt.sh'.format(BASEDIR)])
         sleep(10)
-        building_salt_extra()
+        building_salt_all()
         subprocess.call(['sudo', 'rm', '/etc/apt/sources.list.d/saltstack*'])
         for i in range(20):
             print '*'*50
@@ -792,7 +766,7 @@ if __name__ == "__main__":
                                            .format(ospassword=ospassword)], shell=True)[1:33])
         subprocess.call(['sudo', 'crudini', '--set','/etc/salt/minion.d/openstack.conf', '',
                          'keystone.tenant_id', (' ' + admin_tenid)])
-        building_salt_extra()
+        building_salt_all()
         call_salt('neutron-install')
 
     if varg['third'] or varg['all']:
@@ -821,23 +795,14 @@ if __name__ == "__main__":
                                             ' --os-password {ospassword} --os-auth-url=http://localhost:5000/v2.0'
                                             ' tenant-list | grep -w "admin" | cut -d "|" -f2'
                                            .format(ospassword=ospassword)], shell=True)[1:33])
-        # service_tenid = (subprocess.check_output(['/usr/bin/keystone --os-tenant-name admin --os-username admin'
-        #                                     ' --os-password {ospassword} --os-auth-url=http://localhost:5000/v2.0'
-        #                                     ' tenant-list | grep -w "service" | cut -d "|" -f2'
-        #                                    .format(ospassword=ospassword)], shell=True)[1:33])
-        # # print admin_tenid
-        # subprocess.call(['sudo', 'crudini', '--set','/etc/neutron/neutron.conf', 'DEFAULT',
-        #                  'nova_admin_tenant_id', service_tenid])
         subprocess.call(['sudo', 'crudini', '--set','/etc/salt/minion.d/openstack.conf', '',
                           'keystone.tenant_id', (' ' + admin_tenid)])
-        # if neutron_switch == 'openvswitch':
-        #     create_ovs_networks()
         create_basic_networks()
     if varg['third'] or varg['all']:
         call_salt('nova-install')
         # subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'nova-install'])
         # sleep(5)
-        building_salt_extra()
+        building_salt_all()
         sleep(5)
         call_salt('neutron_changes')
         # subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'neutron_changes'])
@@ -871,38 +836,112 @@ if __name__ == "__main__":
     if desktop:
         if varg['desktop']:
             subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'desktop'])
-
             sleep(5)
         if onedev:
             subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'onepk-external'])
             sleep(5)
-    if varg['rehost']:
+    if varg['rehost1']:
         '''rehost resets ip addresses of the host itself, resets the clock to deal with drift
 
         '''
-        building_salt_extra()
+        building_salt_all()
         sleep(5)
         print "please wait - this may take 30 minutes to complete"
         #call_salt('host')
         #call_salt('ntp')
         subprocess.call(['sudo', 'salt-call', '--local', '-l', 'quiet', 'state.sls', 'host'])
         subprocess.call(['sudo', 'salt-call', '--local', '-l', 'quiet', 'state.sls', 'ntp'])
-    if varg['password']:
-        k_delete_list = (subprocess.check_output( ['keystone --os-username admin --os-password {0}'
+    if varg['rehost']:
+        qcall = ['neutron', '--os-tenant-name', 'admin', '--os-username', 'admin', '--os-password',
+                 'password', '--os-auth-url=http://localhost:5000/v2.0']
+        nmcall = ['nova-manage', '--os-tenant-name', 'admin', '--os-username', 'admin', '--os-password',
+                 'password', '--os-auth-url=http://localhost:5000/v2.0']
+        k_delete_list = (subprocess.check_output( ['keystone --os-username admin --os-password password'
                                                        ' --os-tenant-name admin'
                                                        ' --os-auth-url=http://localhost:5000/v2.0 endpoint-list'
-                                                       ' | grep -w "regionOne" | cut -d "|" -f2'.format(ospassword)],
+                                                       ' | grep -w "regionOne" | cut -d "|" -f2'],
                                                      shell=True)).split()
+        building_salt_extra()
+        zip_hosts = zip(host_sls,host_sls_values)
+        with open(("/tmp/hostgrain"), "w") as salt_host_grain:
+            salt_host_grain.write("""{""")
+            for each in zip_hosts:
+                key,value = each[0],each[1]
+                if type(value) == bool or value.lower() == 'true' or value.lower() == 'false':
+                    salt_host_grain.write(""" '{key}': {value} ,""".format(key=key,value=value))
+                else:
+                    salt_host_grain.write(""" '{key}': '{value}',""".format(key=key,value=value))
+            salt_host_grain.write("""}""")
+        with open(("/tmp/hostgrain"), "r") as salt_grain_read:
+          subprocess.call(['sudo', 'salt-call', '--local','grains.setvals', salt_grain_read.read() ])
+
+        nova_services_hosts = ["'ubuntu'"]
+        nova_service_list = ["nova-compute","nova-cert","nova-consoleauth","nova-scheduler","nova-conductor"]
+        # if not hostname == 'virl':
+        #     nova_services_hosts.append("'virl'")
+        #     q_delete_list = (subprocess.check_output( ['neutron --os-username admin --os-password password'
+        #                                                ' --os-tenant-name admin'
+        #                                                ' --os-auth-url=http://localhost:5000/v2.0 agent-list'
+        #                                                ' | grep -w "virl" | cut -d "|" -f2'],
+        #                                              shell=True)).split()
+        #     for _qeach in q_delete_list:
+        #         subprocess.call(qcall + ['agent-delete', '{0}'.format(_qeach)])
+        # for _each in nova_services_hosts:
+        print ('Deleting Nova services for old hostnames')
+        subprocess.call(['sudo', 'mysql', '-uroot', '-ppassword', 'nova',
+                        '--execute=delete from compute_nodes'])
+        subprocess.call(['sudo', 'mysql', '-uroot', '-ppassword', 'nova',
+                         '--execute=delete from services'])
+        subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'virl_core.project_absent', 'name=guest'])
+        subprocess.call(qcall + ['subnet-delete', 'flat'])
+        subprocess.call(qcall + ['subnet-delete', 'flat1'])
+        subprocess.call(qcall + ['subnet-delete', 'ext-net'])
+        q_delete_list = (subprocess.check_output( ['neutron --os-username admin --os-password password'
+                                                   ' --os-tenant-name admin'
+                                                   ' --os-auth-url=http://localhost:5000/v2.0 agent-list'
+                                                   ' | grep -w "virl" | cut -d "|" -f2'],
+                                                   shell=True)).split()
+        for _qeach in q_delete_list:
+            subprocess.call(qcall + ['agent-delete', '{0}'.format(_qeach)])
+
         for _keach in k_delete_list:
             subprocess.call(kcall + ['endpoint-delete', '{0}'.format(_keach)])
+        subprocess.call(['sudo', 'salt-call', '--local', '-l', 'quiet', 'state.sls', 'host'])
+        subprocess.call(['sudo', 'service', 'virl-uwm', 'stop'])
+        subprocess.call(['sudo', 'service', 'virl-std', 'stop'])
+        subprocess.call(['sudo', 'pip','uninstall', 'VIRL-CORE', '-y'])
+        subprocess.call(['sudo', 'rm', '-rf', '/var/local/virl'])
+        building_salt_all()
+        sleep(5)
+        call_salt('openrc')
+        print ('You need to restart now')
+    if varg['renumber']:
         for _each in ['password_change','rabbitmq-install','keystone-install','keystone-setup','keystone-setup',
-                      'keystone-endpoint','osclients','openrc','glance-install','neutron-install','cinder-install',
-                      'dash-install','nova-install','neutron_changes','std','ank']:
+                      'keystone-endpoint','osclients']:
             call_salt(_each)
+        building_salt_all()
+        for _next in ['glance-install','neutron-install','cinder-install',
+                      'dash-install','nova-install','neutron_changes','std','ank']:
+            call_salt(_next)
+        create_basic_networks()
+        if guest_account:
+            call_salt('guest')
+        User_Creator(user_list, user_list_limited)
+        subprocess.call(['rm', '/home/virl/Desktop/Edit-settings.desktop'])
+        subprocess.call(['rm', '/home/virl/Desktop/Reboot2.desktop'])
+        subprocess.call(['rm', '/home/virl/Desktop/VIRL-rehost.desktop'])
+        subprocess.call(['rm', '/home/virl/Desktop/VIRL-renumber.desktop'])
+        subprocess.call(['rm', '/home/virl/Desktop/README.desktop'])
+        print ('You need to restart now')
+        sleep(30)
+
 
     if varg['images']:
         call_salt('routervms')
-    if varg['renumber']:
+    if varg['vmm']:
+        call_salt('vmm-download')
+
+    if varg['renumber2']:
         '''renumber fixes initial os nets and services list only'''
         qcall = ['neutron', '--os-tenant-name', 'admin', '--os-username', 'admin', '--os-password',
                  '{0}'.format(ospassword), '--os-auth-url=http://localhost:5000/v2.0']
@@ -930,14 +969,6 @@ if __name__ == "__main__":
         # for _neach in nova_service_list:
         #   subprocess.call(nmcall + ['service disable --host virl --service {0}'.format(_neach)])
         subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'virl_core.project_absent', 'name=guest'])
-        # subprocess.call(qcall + ['router-gateway-clear', 'guest'])
-        # subprocess.call(qcall + ['router-interface-delete', 'guest', 'guest'])
-        # subprocess.call(qcall + ['router-interface-delete', 'guest', 'guest_snat'])
-        # subprocess.call(qcall + ['router-delete', 'guest'])
-        # subprocess.call(qcall + ['subnet-delete', 'guest'])
-        # subprocess.call(qcall + ['subnet-delete', 'guest_snat'])
-        # subprocess.call(qcall + ['net-delete', 'guest'])
-        # subprocess.call(qcall + ['net-delete', 'guest_snat'])
         subprocess.call(qcall + ['subnet-delete', 'flat'])
         subprocess.call(qcall + ['subnet-delete', 'flat1'])
         subprocess.call(qcall + ['subnet-delete', 'ext-net'])
@@ -967,7 +998,7 @@ if __name__ == "__main__":
         sleep(30)
 
     if varg['salt']:
-        building_salt_extra()
+        building_salt_all()
     if varg['wrap']:
         sshdir = '/home/virl/.ssh'
         if not path.exists(sshdir):
