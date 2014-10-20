@@ -49,10 +49,11 @@ while not while_exit:
         if not path.exists('/etc/salt/minion.d'):
             subprocess.check_output(['mkdir', '-p', '/etc/salt/minion.d'])
         with open(("/etc/salt/minion.d/extra.conf"), "w") as extra:
-            extra.write("""master: {salt_master}\n""".format(salt_master=salt_master))
+            extra.write("""master: [{salt_master}]\n""".format(salt_master=salt_master))
             extra.write("""id: {salt_name}\n""".format(salt_name=salt_name))
             extra.write("""append_domain: {salt_append_domain}\n""".format(salt_append_domain=salt_append_domain))
-            extra.write("""master_type: failover \n""")
+            if len(salt_master.split(',')) >= 2:
+              extra.write("""master_type: failover \n""")
             extra.write("""verify_master_pubkey_sign: True \n""")
             extra.write("""master_shuffle: True \n""")
             extra.write("""master_alive_interval: 180 \n""")
@@ -74,12 +75,12 @@ while not while_exit:
 
     if choice == 6:
         subprocess.call(['mkdir', '-p','/etc/salt/pki/minion'])
-        subprocess.call(['cp', './master_sign.pub /etc/salt/pki/minion', '-k'])
-        subprocess.call(['sh', '/home/virl/virl-bootstrap/install_salt.sh'])
+        subprocess.call(['cp', './master_sign.pub /etc/salt/pki/minion'])
+        subprocess.call(['sh', '/home/virl/virl-bootstrap/install_salt.sh', 'git', '2014.7'])
     if choice == 7:
         subprocess.call(['mkdir', '-p','/etc/salt/pki/minion'])
-        subprocess.call(['cp', './master_sign.pub /etc/salt/pki/minion', '-k'])
-        subprocess.call(['sh', '/home/virl/virl-bootstrap/install_salt.sh', '-k', (cwd + '/preseed_keys')])
+        subprocess.call(['cp', './master_sign.pub /etc/salt/pki/minion'])
+        subprocess.call(['sh', '/home/virl/virl-bootstrap/install_salt.sh', '-k', (cwd + '/preseed_keys'), 'git', '2014.7'])
     if choice == 8:
         subprocess.call(['salt-call', 'test.ping'])
     if choice == 9:

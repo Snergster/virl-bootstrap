@@ -298,10 +298,11 @@ def alter_virlcfg():
 def building_salt_extra():
     with open(("/tmp/extra"), "w") as extra:
         if not salt_master == 'none' or vagrant_pre_fourth:
-            extra.write("""master: \n""")
-            for each in salt_master.split(','):
-                extra.write("""  - {each}\n""".format(each=each))
-            extra.write("""master_type: failover \n""")
+            extra.write("""master: [{salt_master}]\n""".format(salt_master=salt_master))
+            # for each in salt_master.split(','):
+            #     extra.write("""  - {each}\n""".format(each=each))
+            if len(salt_master.split(',')) >= 2:
+                extra.write("""master_type: failover \n""")
             extra.write("""verify_master_pubkey_sign: True \n""")
             extra.write("""master_shuffle: True \n""")
             extra.write("""master_alive_interval: 180 \n""")
