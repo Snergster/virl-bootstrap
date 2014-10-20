@@ -5,7 +5,7 @@
 """virl install.
 
 Usage:
-  foo.py zero | first | second | third | fourth | salt | test | iso | wrap | desktop | rehost | renumber | compute | all | images | password | vmm | renumber2 | rehost1
+  foo.py zero | first | second | third | fourth | salt | test | iso | wrap | desktop | rehost | renumber | compute | all | images | password | vmm | renumber2 | rehost1 | users | vinstall | host
 
 Options:
   --version             shows program's version number and exit
@@ -730,7 +730,7 @@ def call_salt(slsfile):
 
 if __name__ == "__main__":
 
-    varg = docopt(__doc__, version='vinstall .1')
+    varg = docopt(__doc__, version='vinstall .8')
     if varg['zero']:
         if proxy:
             subprocess.call(['sudo', 'env', 'https_proxy={0}'.format(http_proxy),
@@ -752,8 +752,8 @@ if __name__ == "__main__":
         print 'Please validate the contents of /etc/network/interfaces before rebooting!'
 
     if varg['second'] or varg['all']:
-        for _each in ['mysql-install','rabbitmq-install','keystone-install','keystone-setup','keystone-setup',
-                      'keystone-endpoint','osclients','openrc','glance-install']:
+        for _each in ['openstack.mysql','openstack.rabbitmq','openstack.keystone.install','openstack.keystone.setup','openstack.keystone.setup',
+                      'openstack.keystone.endpoint','openstack.osclients','virl.openrc','openstack.glance']:
             call_salt(_each)
 
         admin_tenid = (subprocess.check_output(['/usr/bin/keystone --os-tenant-name admin --os-username admin'
@@ -767,11 +767,11 @@ if __name__ == "__main__":
         subprocess.call(['sudo', 'crudini', '--set','/etc/salt/minion.d/openstack.conf', '',
                          'keystone.tenant_id', (' ' + admin_tenid)])
         building_salt_all()
-        call_salt('neutron-install')
+        call_salt('openstack.neutron.install')
 
     if varg['third'] or varg['all']:
         if cinder:
-            call_salt('cinder-install')
+            call_salt('openstack.cinder.install')
             # subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'cinder-install'])
             if cinder_file:
                 subprocess.call(['sudo', '/bin/dd', 'if=/dev/zero', 'of={0}'.format(cinder_loc), 'bs=1M',
@@ -787,8 +787,8 @@ if __name__ == "__main__":
 
 
         if horizon:
-            call_salt('dash-install')
-            # subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'dash-install'])
+            call_salt('openstack.dash')
+            # subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'openstack.dash'])
             # sleep(5)
 
         admin_tenid = (subprocess.check_output(['/usr/bin/keystone --os-tenant-name admin --os-username admin'
@@ -799,29 +799,29 @@ if __name__ == "__main__":
                           'keystone.tenant_id', (' ' + admin_tenid)])
         create_basic_networks()
     if varg['third'] or varg['all']:
-        call_salt('nova-install')
-        # subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'nova-install'])
+        call_salt('openstack.nova.install')
+        # subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'openstack.nova.install'])
         # sleep(5)
         building_salt_all()
         sleep(5)
-        call_salt('neutron_changes')
-        # subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'neutron_changes'])
+        call_salt('openstack.neutron.changes')
+        # subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'openstack.neutron.changes'])
         # place_startup_scripts()
         apache_write()
         if vnc:
-            subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'tightvncserver'])
+            subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'common.tightvncserver'])
             if not vnc_passwd == 'letmein':
                 set_vnc_password(vnc_passwd)
             sleep(5)
         if heat:
-            call_salt('heat-install')
-            # subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'heat-install'])
+            call_salt('openstack.heat')
+            # subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'openstack.heat'])
             # sleep(5)
 
     if varg['fourth'] or varg['all']:
-        subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'std'])
+        subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'virl.std'])
         sleep(5)
-        subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'ank'])
+        subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'virl.ank'])
         if guest_account:
             call_salt('guest')
         # std_install()
@@ -831,11 +831,11 @@ if __name__ == "__main__":
         print 'testing'
     if varg['compute']:
         if not controller:
-            subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'nova_compute'])
-            subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'neutron_compute'])
+            subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'openstack.nova.compute'])
+            subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'openstack.neutron.compute'])
     if desktop:
         if varg['desktop']:
-            subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'desktop'])
+            subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'virl.desktop'])
             sleep(5)
         if onedev:
             subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'onepk-external'])
@@ -877,16 +877,6 @@ if __name__ == "__main__":
 
         nova_services_hosts = ["'ubuntu'"]
         nova_service_list = ["nova-compute","nova-cert","nova-consoleauth","nova-scheduler","nova-conductor"]
-        # if not hostname == 'virl':
-        #     nova_services_hosts.append("'virl'")
-        #     q_delete_list = (subprocess.check_output( ['neutron --os-username admin --os-password password'
-        #                                                ' --os-tenant-name admin'
-        #                                                ' --os-auth-url=http://localhost:5000/v2.0 agent-list'
-        #                                                ' | grep -w "virl" | cut -d "|" -f2'],
-        #                                              shell=True)).split()
-        #     for _qeach in q_delete_list:
-        #         subprocess.call(qcall + ['agent-delete', '{0}'.format(_qeach)])
-        # for _each in nova_services_hosts:
         print ('Deleting Nova services for old hostnames')
         subprocess.call(['sudo', 'mysql', '-uroot', '-ppassword', 'nova',
                         '--execute=delete from compute_nodes'])
@@ -913,15 +903,15 @@ if __name__ == "__main__":
         subprocess.call(['sudo', 'rm', '-rf', '/var/local/virl'])
         building_salt_all()
         sleep(5)
-        call_salt('openrc')
+        call_salt('virl.openrc')
         print ('You need to restart now')
     if varg['renumber']:
-        for _each in ['password_change','rabbitmq-install','keystone-install','keystone-setup','keystone-setup',
-                      'keystone-endpoint','osclients']:
+        for _each in ['openstack.password.change','openstack.rabbitmq','openstack.keystone.install','openstack.keystone.setup','openstack.keystone.setup',
+                      'openstack.keystone.endpoint','openstack.osclients']:
             call_salt(_each)
         building_salt_all()
-        for _next in ['glance-install','neutron-install','cinder-install',
-                      'dash-install','nova-install','neutron_changes','std','ank']:
+        for _next in ['openstack.glance','openstack.neutron.install','openstack.cinder.install',
+                      'openstack.dash','openstack.nova.install','openstack.neutron.changes','virl.std','virl.ank']:
             call_salt(_next)
         create_basic_networks()
         if guest_account:
@@ -934,12 +924,13 @@ if __name__ == "__main__":
         subprocess.call(['rm', '/home/virl/Desktop/README.desktop'])
         print ('You need to restart now')
         sleep(30)
-
+    if varg['host']:
+        call_salt('host')
 
     if varg['images']:
-        call_salt('routervms')
+        call_salt('virl.routervms')
     if varg['vmm']:
-        call_salt('vmm-download')
+        call_salt('virl.vmm.download')
 
     if varg['renumber2']:
         '''renumber fixes initial os nets and services list only'''
@@ -950,7 +941,7 @@ if __name__ == "__main__":
         subprocess.call(['sudo', 'rabbitmqctl', 'change_password', 'guest', ospassword])
         sleep(15)
         nova_services_hosts = ["'ubuntu'"]
-        nova_service_list = ["nova-compute","nova-cert","nova-consoleauth","nova-scheduler","nova-conductor"]
+        nova_service_list = ["openstack.nova.compute","nova-cert","nova-consoleauth","nova-scheduler","nova-conductor"]
         if not hostname == 'virl':
             nova_services_hosts.append("'virl'")
             q_delete_list = (subprocess.check_output( ['neutron --os-username admin --os-password {0}'
@@ -974,13 +965,13 @@ if __name__ == "__main__":
         subprocess.call(qcall + ['subnet-delete', 'ext-net'])
 
         create_basic_networks()
-        subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'neutron_changes'])
+        subprocess.call(['sudo', 'salt-call', '-l', 'quiet', 'state.sls', 'openstack.neutron.changes'])
         call_salt('renum')
         if not vnc_passwd == 'letmein':
             set_vnc_password(vnc_passwd)
         if RAMDISK:
             # subprocess.call(['sudo', '-s', (BASEDIR + 'install_scripts/vsetup_ramdisk')])
-            call_salt('nova-install')
+            call_salt('openstack.nova.install')
         User_Creator(user_list, user_list_limited)
         call_salt('guest')
         # if guest_account:
@@ -996,9 +987,12 @@ if __name__ == "__main__":
         subprocess.call(['rm', '/home/virl/Desktop/README.desktop'])
         print ('You need to restart now')
         sleep(30)
-
     if varg['salt']:
         building_salt_all()
+    if varg['users']:
+        User_Creator(user_list, user_list_limited)
+    if varg['vinstall']:
+        call_salt('virl.vinstall')
     if varg['wrap']:
         sshdir = '/home/virl/.ssh'
         if not path.exists(sshdir):
