@@ -75,11 +75,11 @@ while not while_exit:
 
     if choice == 6:
         subprocess.call(['mkdir', '-p','/etc/salt/pki/minion'])
-        subprocess.call(['cp', './master_sign.pub /etc/salt/pki/minion'])
+        subprocess.call(['cp', './master_sign.pub', '/etc/salt/pki/minion'])
         subprocess.call(['sh', '/home/virl/virl-bootstrap/install_salt.sh', 'git', '2014.7'])
     if choice == 7:
         subprocess.call(['mkdir', '-p','/etc/salt/pki/minion'])
-        subprocess.call(['cp', './master_sign.pub /etc/salt/pki/minion'])
+        subprocess.call(['cp', './master_sign.pub', '/etc/salt/pki/minion'])
         subprocess.call(['sh', '/home/virl/virl-bootstrap/install_salt.sh', '-k', (cwd + '/preseed_keys'), 'git', '2014.7'])
     if choice == 8:
         subprocess.call(['salt-call', 'test.ping'])
