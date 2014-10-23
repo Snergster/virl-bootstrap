@@ -83,8 +83,8 @@ while not while_exit:
         subprocess.call(['rm', '-f', './preseed_keys/minion.pem'])
         subprocess.call(['cp', './preseed_keys/*.pem', './preseed_keys/minion.pem'])
         subprocess.call(['openssl', 'rsa', '-in', './preseed_keys/minion.pem', '-pubout', '>./preseed_keys/minion.pub'])
-        subprocess.call(['cp', '-f', './preseed_keys/minion/minion.pem', '/etc/salt/pki/minion/minion.pem'])
-        subprocess.call(['cp', '-f', './preseed_keys/minion/minion.pem', '/etc/salt/pki/minion/minion.pub'])
+        subprocess.call(['cp', '-f', './preseed_keys/minion.pem', '/etc/salt/pki/minion/minion.pem'])
+        subprocess.call(['cp', '-f', './preseed_keys/minion.pem', '/etc/salt/pki/minion/minion.pub'])
         subprocess.call(['chmod', '400', '/etc/salt/pki/minion/minion.pem'])
         subprocess.call(['sh', '/home/virl/virl-bootstrap/install_salt.sh', 'git', '2014.7'])
     if choice == 8:
