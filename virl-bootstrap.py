@@ -83,7 +83,7 @@ while not while_exit:
         subprocess.call(['cp', './master_sign.pub', '/etc/salt/pki/minion'])
         subprocess.call(['rm', '-f', './preseed_keys/minion.pem'])
         for file in glob.glob(r'{0}/preseed_keys/*.pem'.format(cwd)):
-            subprocess.call(['cp', '{0}/preseed_keys/{1}'.format(cwd,file), '{0}/preseed_keys/minion.pem'.format(cwd)])
+            subprocess.call(['cp', '{0}'.format(file), '{0}/preseed_keys/minion.pem'.format(cwd)])
         subprocess.call('openssl rsa -in {0}/preseed_keys/minion.pem  -pubout > {0}/preseed_keys/minion.pub'.format(cwd), shell=True)
         subprocess.call(['cp', '-f', '{0}/preseed_keys/minion.pem'.format(cwd), '/etc/salt/pki/minion/minion.pem'])
         subprocess.call(['cp', '-f', '{0}/preseed_keys/minion.pub'.format(cwd), '/etc/salt/pki/minion/minion.pub'])
