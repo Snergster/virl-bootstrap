@@ -2,8 +2,9 @@
 __author__ = 'ejk'
 
 import subprocess
-from os import path,getcwd
+from os import path
 from time import sleep
+import glob
 
 salt_master = 'salt-master.cisco.com'
 salt_name = 'virl'
@@ -81,7 +82,8 @@ while not while_exit:
         subprocess.call(['mkdir', '-p','/etc/salt/pki/minion'])
         subprocess.call(['cp', './master_sign.pub', '/etc/salt/pki/minion'])
         subprocess.call(['rm', '-f', './preseed_keys/minion.pem'])
-        subprocess.call(['cp', '{0}/preseed_keys/*.pem'.format(cwd), '{0}/preseed_keys/minion.pem'.format(cwd)])
+        for file in glob.glob(r'{0}/preseed_keys/*.pem'.format(cwd)):
+            subprocess.call(['cp', '{0}/preseed_keys/{1}'.format(cwd,file), '{0}/preseed_keys/minion.pem'.format(cwd)])
         subprocess.call(['openssl', 'rsa', '-in', '{0}/preseed_keys/minion.pem'.format(cwd), '-pubout', '>', '{0}/preseed_keys/minion.pub'.format(cwd)])
         subprocess.call(['cp', '-f', '{0}/preseed_keys/minion.pem'.format(cwd), '/etc/salt/pki/minion/minion.pem'])
         subprocess.call(['cp', '-f', '{0}/preseed_keys/minion.pem'.format(cwd), '/etc/salt/pki/minion/minion.pub'])
