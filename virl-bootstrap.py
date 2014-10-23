@@ -2,7 +2,7 @@
 __author__ = 'ejk'
 
 import subprocess
-from os import path
+from os import path,getcwd
 from time import sleep
 
 salt_master = 'salt-master.cisco.com'
@@ -81,10 +81,10 @@ while not while_exit:
         subprocess.call(['mkdir', '-p','/etc/salt/pki/minion'])
         subprocess.call(['cp', './master_sign.pub', '/etc/salt/pki/minion'])
         subprocess.call(['rm', '-f', './preseed_keys/minion.pem'])
-        subprocess.call(['cp', './preseed_keys/*.pem', './preseed_keys/minion.pem'])
-        subprocess.call(['openssl', 'rsa', '-in', './preseed_keys/minion.pem', '-pubout', '>./preseed_keys/minion.pub'])
-        subprocess.call(['cp', '-f', './preseed_keys/minion.pem', '/etc/salt/pki/minion/minion.pem'])
-        subprocess.call(['cp', '-f', './preseed_keys/minion.pem', '/etc/salt/pki/minion/minion.pub'])
+        subprocess.call(['cp', '{0}/preseed_keys/*.pem'.format(cwd), '{0}/preseed_keys/minion.pem'.format(cwd)])
+        subprocess.call(['openssl', 'rsa', '-in', '{0}/preseed_keys/minion.pem'.format(cwd), '-pubout', '>', '{0}/preseed_keys/minion.pub'.format(cwd)])
+        subprocess.call(['cp', '-f', '{0}/preseed_keys/minion.pem'.format(cwd), '/etc/salt/pki/minion/minion.pem'])
+        subprocess.call(['cp', '-f', '{0}/preseed_keys/minion.pem'.format(cwd), '/etc/salt/pki/minion/minion.pub'])
         subprocess.call(['chmod', '400', '/etc/salt/pki/minion/minion.pem'])
         subprocess.call(['sh', '/home/virl/virl-bootstrap/install_salt.sh', 'git', '2014.7'])
     if choice == 8:
